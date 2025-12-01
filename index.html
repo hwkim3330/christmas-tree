@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shared Christmas Tree 🎄</title>
+    <meta name="description" content="Share ornaments on a virtual Christmas tree with friends and family">
+    <meta name="theme-color" content="#020617">
+    <meta property="og:title" content="Shared Christmas Tree">
+    <meta property="og:description" content="Add your ornament to our shared Christmas tree!">
+    <meta property="og:type" content="website">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap');
@@ -11,15 +16,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(to bottom, #020617 0%, #172554 50%, #1e293b 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Snow Canvas */
         #snowCanvas {
             position: fixed;
             inset: 0;
@@ -27,7 +33,6 @@
             z-index: 10;
         }
 
-        /* Background */
         .background {
             position: fixed;
             inset: 0;
@@ -82,7 +87,6 @@
             transform: scaleX(1.5);
         }
 
-        /* House */
         .house {
             position: absolute;
             bottom: 100px;
@@ -159,22 +163,22 @@
             100% { transform: translateY(-30px) scale(1.5); opacity: 0; }
         }
 
-        /* Main */
         .container {
             position: relative;
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
             z-index: 5;
         }
 
-        /* Header */
         .header {
             margin-top: 20px;
             padding: 12px 28px;
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 50px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
@@ -199,17 +203,21 @@
             background: #22c55e;
             box-shadow: 0 0 8px #22c55e;
             animation: pulse-dot 2s infinite;
+            transition: background 0.3s, box-shadow 0.3s;
         }
         .sync-indicator.offline {
             background: #f59e0b;
             box-shadow: 0 0 8px #f59e0b;
+        }
+        .sync-indicator.error {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
         }
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-        /* Tree Container */
         .tree-container {
             flex: 1;
             display: flex;
@@ -237,7 +245,6 @@
 
         .tree-svg { width: 100%; height: 100%; }
 
-        /* Star */
         .tree-star {
             position: absolute;
             top: 2%;
@@ -253,7 +260,6 @@
             50% { transform: translateX(-50%) scale(1.1); }
         }
 
-        /* Ornaments (Balls) */
         .ball {
             position: absolute;
             width: 38px;
@@ -347,7 +353,6 @@
         }
         .ball:hover .ball-tooltip { opacity: 1; }
 
-        /* Pending Marker */
         .pending-marker {
             position: absolute;
             width: 50px;
@@ -380,7 +385,6 @@
             50% { transform: scale(1.5); opacity: 0.5; }
         }
 
-        /* Tree Lights */
         .tree-lights {
             position: absolute;
             inset: 0;
@@ -399,7 +403,6 @@
             50% { opacity: 1; transform: scale(1.2); }
         }
 
-        /* Sparkle Effect */
         .sparkle {
             position: absolute;
             width: 8px;
@@ -410,13 +413,13 @@
             z-index: 60;
         }
 
-        /* Controls */
         .controls {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             padding: 16px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
             z-index: 50;
             display: flex;
             justify-content: center;
@@ -427,6 +430,7 @@
             max-width: 420px;
             background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 20px;
             border: 1px solid rgba(100, 116, 139, 0.3);
@@ -480,9 +484,14 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(185, 28, 28, 0.5);
         }
+        .add-btn.ready:active { transform: translateY(0); }
         .add-btn.waiting {
             background: rgba(71, 85, 105, 0.5);
             color: rgba(148, 163, 184, 0.8);
+            cursor: not-allowed;
+        }
+        .add-btn:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
         }
 
@@ -507,9 +516,11 @@
             padding: 2px 8px;
             border-radius: 10px;
             margin-left: 8px;
+            transition: all 0.3s ease;
         }
         .status-badge.online { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
         .status-badge.offline { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .status-badge.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
         .btn-group {
             display: flex;
@@ -531,7 +542,6 @@
         }
         .icon-btn.active { color: #fbbf24; }
 
-        /* Toast */
         .toast {
             position: fixed;
             top: 80px;
@@ -549,14 +559,17 @@
             transition: all 0.3s ease;
             z-index: 100;
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            max-width: 90vw;
+            text-align: center;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast.success { background: rgba(6, 78, 59, 0.9); border: 1px solid rgba(16, 185, 129, 0.5); color: #a7f3d0; }
         .toast.info { background: rgba(30, 58, 138, 0.9); border: 1px solid rgba(59, 130, 246, 0.5); color: #bfdbfe; }
         .toast.error { background: rgba(127, 29, 29, 0.9); border: 1px solid rgba(239, 68, 68, 0.5); color: #fecaca; }
+        .toast.warning { background: rgba(120, 53, 15, 0.9); border: 1px solid rgba(245, 158, 11, 0.5); color: #fef3c7; }
 
-        /* Loading */
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -594,6 +607,15 @@
             stroke-width: 2;
             fill: none;
             stroke-dasharray: 8 4;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
@@ -690,7 +712,7 @@
 <div class="controls">
     <div class="control-panel">
         <div class="input-row">
-            <input type="text" class="name-input" id="nameInput" placeholder="Your name..." maxlength="12">
+            <input type="text" class="name-input" id="nameInput" placeholder="Your name..." maxlength="12" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <button class="add-btn waiting" id="addBtn">
                 <span id="btnIcon">📍</span>
                 <span id="btnText">Pick Spot</span>
@@ -721,523 +743,750 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Background Music (optional - add your own song.mp3) -->
-<audio id="bgMusic" loop>
+<audio id="bgMusic" loop preload="none">
     <source src="song.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-// ==========================================
-// Firebase Realtime Database Configuration
-// ==========================================
-const BASE_DB = "https://christmas-tree-ef839-default-rtdb.firebaseio.com";
-const BALLS_ENDPOINT = BASE_DB + "/balls.json";
+(function() {
+    'use strict';
 
-// ==========================================
-// State
-// ==========================================
-let balls = {};
-let pendingPos = null;
-let isMuted = false;
-let isOnline = false;
-let lastData = null;
-let isDragging = false;
+    // ==========================================
+    // Configuration
+    // ==========================================
+    const CONFIG = {
+        BASE_DB: "https://christmas-tree-ef839-default-rtdb.firebaseio.com",
+        POLL_INTERVAL: 2000,
+        FETCH_TIMEOUT: 10000,
+        MAX_RETRIES: 3,
+        RETRY_DELAY: 1000,
+        MAX_NAME_LENGTH: 12,
+        MIN_NAME_LENGTH: 1,
+        RATE_LIMIT_MS: 1000,
+    };
 
-// Colors for balls
-const COLORS = [
-    "#e74c3c", "#c0392b",  // Reds
-    "#f1c40f", "#f39c12",  // Golds
-    "#9b59b6", "#8e44ad",  // Purples
-    "#3498db", "#2980b9",  // Blues
-    "#1abc9c", "#16a085",  // Teals
-    "#e67e22", "#d35400",  // Oranges
-    "#ff6b6b", "#ee5a5a"   // Corals
-];
+    const BALLS_ENDPOINT = CONFIG.BASE_DB + "/balls.json";
 
-// ==========================================
-// DOM Elements
-// ==========================================
-const treeWrapper = document.getElementById('treeWrapper');
-const ballsContainer = document.getElementById('ballsContainer');
-const pendingMarker = document.getElementById('pendingMarker');
-const nameInput = document.getElementById('nameInput');
-const addBtn = document.getElementById('addBtn');
-const btnIcon = document.getElementById('btnIcon');
-const btnText = document.getElementById('btnText');
-const ballCount = document.getElementById('ballCount');
-const soundBtn = document.getElementById('soundBtn');
-const musicBtn = document.getElementById('musicBtn');
-const toast = document.getElementById('toast');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const treeLights = document.getElementById('treeLights');
-const starsContainer = document.getElementById('stars');
-const syncIndicator = document.getElementById('syncIndicator');
-const statusBadge = document.getElementById('statusBadge');
-const bgMusic = document.getElementById('bgMusic');
+    // ==========================================
+    // State
+    // ==========================================
+    let balls = {};
+    let pendingPos = null;
+    let isMuted = false;
+    let isOnline = false;
+    let lastData = null;
+    let isDragging = false;
+    let lastAddTime = 0;
+    let fetchRetryCount = 0;
+    let pollIntervalId = null;
 
-// ==========================================
-// Utility Functions
-// ==========================================
-function colorFromName(name) {
-    let n = 0;
-    for (let i = 0; i < name.length; i++) {
-        n = (n * 31 + name.charCodeAt(i)) >>> 0;
+    const COLORS = [
+        "#e74c3c", "#c0392b", "#f1c40f", "#f39c12",
+        "#9b59b6", "#8e44ad", "#3498db", "#2980b9",
+        "#1abc9c", "#16a085", "#e67e22", "#d35400",
+        "#ff6b6b", "#ee5a5a"
+    ];
+
+    // ==========================================
+    // DOM Elements (with null checks)
+    // ==========================================
+    const $ = (id) => document.getElementById(id);
+    const treeWrapper = $('treeWrapper');
+    const ballsContainer = $('ballsContainer');
+    const pendingMarker = $('pendingMarker');
+    const nameInput = $('nameInput');
+    const addBtn = $('addBtn');
+    const btnIcon = $('btnIcon');
+    const btnText = $('btnText');
+    const ballCount = $('ballCount');
+    const soundBtn = $('soundBtn');
+    const musicBtn = $('musicBtn');
+    const toast = $('toast');
+    const loadingOverlay = $('loadingOverlay');
+    const treeLights = $('treeLights');
+    const starsContainer = $('stars');
+    const syncIndicator = $('syncIndicator');
+    const statusBadge = $('statusBadge');
+    const bgMusic = $('bgMusic');
+
+    // ==========================================
+    // Utility Functions
+    // ==========================================
+    function colorFromName(name) {
+        if (!name || typeof name !== 'string') return COLORS[0];
+        let n = 0;
+        for (let i = 0; i < name.length; i++) {
+            n = (n * 31 + name.charCodeAt(i)) >>> 0;
+        }
+        return COLORS[n % COLORS.length];
     }
-    return COLORS[n % COLORS.length];
-}
 
-function showToast(message, type = 'info') {
-    toast.textContent = message;
-    toast.className = `toast ${type} show`;
-    setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-function updateConnectionStatus(online) {
-    isOnline = online;
-    syncIndicator.classList.toggle('offline', !online);
-    statusBadge.classList.toggle('online', online);
-    statusBadge.classList.toggle('offline', !online);
-    statusBadge.textContent = online ? 'synced' : 'offline';
-}
-
-// ==========================================
-// Audio
-// ==========================================
-function playBellSound() {
-    if (isMuted) return;
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800 + Math.random() * 400, ctx.currentTime);
-        gainNode.gain.setValueAtTime(0, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 1.5);
-    } catch (e) {}
-}
-
-// ==========================================
-// Sparkle Effect
-// ==========================================
-function createSparkleEffect(x, y) {
-    const count = 35;
-    for (let i = 0; i < count; i++) {
-        const s = document.createElement('div');
-        s.className = 'sparkle';
-        s.style.left = x + 'px';
-        s.style.top = y + 'px';
-        treeWrapper.appendChild(s);
-
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 25 + Math.random() * 40;
-        const destX = Math.cos(angle) * distance;
-        const destY = Math.sin(angle) * distance;
-        const duration = 400 + Math.random() * 400;
-
-        s.animate([
-            { transform: 'translate(0,0) scale(1)', opacity: 1 },
-            { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }
-        ], { duration, easing: 'ease-out' }).onfinish = () => s.remove();
+    function sanitizeName(name) {
+        if (!name || typeof name !== 'string') return '';
+        return name
+            .trim()
+            .slice(0, CONFIG.MAX_NAME_LENGTH)
+            .replace(/[<>\"'&]/g, '');
     }
-}
 
-// ==========================================
-// Snow Effect
-// ==========================================
-function initSnow() {
-    const canvas = document.getElementById('snowCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
-    resize();
-    window.addEventListener('resize', resize);
 
-    const particles = [];
-    const count = Math.min(180, Math.floor(window.innerWidth / 6));
+    function isValidPosition(x, y) {
+        return typeof x === 'number' && typeof y === 'number' &&
+               !isNaN(x) && !isNaN(y) &&
+               x >= 0 && x <= 100 && y >= 0 && y <= 100;
+    }
 
-    for (let i = 0; i < count; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            r: Math.random() * 2.5 + 0.5,
-            vx: Math.random() * 0.4 - 0.2,
-            vy: Math.random() * 1.2 + 0.4,
-            opacity: Math.random() * 0.5 + 0.3
+    // ==========================================
+    // Toast Notifications
+    // ==========================================
+    let toastTimeout = null;
+    function showToast(message, type = 'info', duration = 3000) {
+        if (!toast) return;
+        if (toastTimeout) clearTimeout(toastTimeout);
+
+        toast.textContent = message;
+        toast.className = `toast ${type} show`;
+
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
+
+    // ==========================================
+    // Connection Status
+    // ==========================================
+    function updateConnectionStatus(status) {
+        isOnline = status === 'online';
+
+        if (syncIndicator) {
+            syncIndicator.classList.remove('offline', 'error');
+            if (status === 'offline') syncIndicator.classList.add('offline');
+            if (status === 'error') syncIndicator.classList.add('error');
+        }
+
+        if (statusBadge) {
+            statusBadge.classList.remove('online', 'offline', 'error');
+            statusBadge.classList.add(status === 'online' ? 'online' : status === 'error' ? 'error' : 'offline');
+            statusBadge.textContent = status === 'online' ? 'synced' : status === 'error' ? 'error' : 'offline';
+        }
+    }
+
+    // ==========================================
+    // Audio (with error handling)
+    // ==========================================
+    function playBellSound() {
+        if (isMuted) return;
+
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800 + Math.random() * 400, ctx.currentTime);
+
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 1.5);
+
+            // Clean up
+            setTimeout(() => {
+                try { ctx.close(); } catch(e) {}
+            }, 2000);
+        } catch (e) {
+            console.warn('Audio playback failed:', e);
+        }
+    }
+
+    // ==========================================
+    // Sparkle Effect
+    // ==========================================
+    function createSparkleEffect(x, y) {
+        if (!treeWrapper || typeof x !== 'number' || typeof y !== 'number') return;
+
+        const count = 35;
+        for (let i = 0; i < count; i++) {
+            const s = document.createElement('div');
+            s.className = 'sparkle';
+            s.style.left = x + 'px';
+            s.style.top = y + 'px';
+            treeWrapper.appendChild(s);
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 25 + Math.random() * 40;
+            const destX = Math.cos(angle) * distance;
+            const destY = Math.sin(angle) * distance;
+            const duration = 400 + Math.random() * 400;
+
+            try {
+                const animation = s.animate([
+                    { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                    { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }
+                ], { duration, easing: 'ease-out' });
+
+                animation.onfinish = () => s.remove();
+            } catch(e) {
+                // Fallback for browsers without Web Animations API
+                setTimeout(() => s.remove(), duration);
+            }
+        }
+    }
+
+    // ==========================================
+    // Snow Effect
+    // ==========================================
+    function initSnow() {
+        const canvas = $('snowCanvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const particles = [];
+        const count = Math.min(180, Math.floor(window.innerWidth / 6));
+
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 2.5 + 0.5,
+                vx: Math.random() * 0.4 - 0.2,
+                vy: Math.random() * 1.2 + 0.4,
+                opacity: Math.random() * 0.5 + 0.3
+            });
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (const p of particles) {
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.y += p.vy;
+                p.x += p.vx + Math.sin(p.y / 80) * 0.3;
+
+                if (p.y > canvas.height) { p.y = -5; p.x = Math.random() * canvas.width; }
+                if (p.x > canvas.width) p.x = 0;
+                if (p.x < 0) p.x = canvas.width;
+            }
+
+            requestAnimationFrame(render);
+        }
+        render();
+    }
+
+    // ==========================================
+    // Stars
+    // ==========================================
+    function initStars() {
+        if (!starsContainer) return;
+
+        for (let i = 0; i < 50; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 50 + '%';
+            star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
+            star.style.animationDelay = Math.random() * 2 + 's';
+            star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            starsContainer.appendChild(star);
+        }
+    }
+
+    // ==========================================
+    // Tree Lights
+    // ==========================================
+    function initTreeLights() {
+        if (!treeLights) return;
+
+        const positions = [
+            { x: 25, y: 85 }, { x: 40, y: 88 }, { x: 55, y: 86 }, { x: 70, y: 84 },
+            { x: 28, y: 70 }, { x: 42, y: 73 }, { x: 58, y: 71 }, { x: 72, y: 68 },
+            { x: 32, y: 55 }, { x: 45, y: 58 }, { x: 55, y: 56 }, { x: 68, y: 53 },
+            { x: 36, y: 42 }, { x: 50, y: 45 }, { x: 64, y: 40 },
+            { x: 42, y: 28 }, { x: 50, y: 32 }, { x: 58, y: 27 },
+        ];
+        const colors = ['#ef4444', '#fbbf24', '#22c55e', '#3b82f6', '#f472b6', '#a855f7'];
+
+        positions.forEach((pos, i) => {
+            const light = document.createElement('div');
+            light.className = 'light';
+            light.style.left = pos.x + '%';
+            light.style.top = pos.y + '%';
+            light.style.background = colors[i % colors.length];
+            light.style.boxShadow = `0 0 10px ${colors[i % colors.length]}`;
+            light.style.animationDelay = (Math.random() * 1.5) + 's';
+            treeLights.appendChild(light);
         });
     }
 
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (const p of particles) {
-            ctx.beginPath();
-            ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fill();
-            p.y += p.vy;
-            p.x += p.vx + Math.sin(p.y / 80) * 0.3;
-            if (p.y > canvas.height) { p.y = -5; p.x = Math.random() * canvas.width; }
-            if (p.x > canvas.width) p.x = 0;
-            if (p.x < 0) p.x = canvas.width;
+    // ==========================================
+    // Firebase CRUD (with robust error handling)
+    // ==========================================
+    async function fetchWithTimeout(url, options = {}, timeout = CONFIG.FETCH_TIMEOUT) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
         }
-        requestAnimationFrame(render);
     }
-    render();
-}
 
-// ==========================================
-// Stars
-// ==========================================
-function initStars() {
-    for (let i = 0; i < 50; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.left = Math.random() * 100 + '%';
-        star.style.top = Math.random() * 50 + '%';
-        star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
-        star.style.animationDelay = Math.random() * 2 + 's';
-        star.style.animationDuration = (Math.random() * 2 + 1) + 's';
-        starsContainer.appendChild(star);
-    }
-}
+    async function fetchBalls() {
+        try {
+            const res = await fetchWithTimeout(BALLS_ENDPOINT);
 
-// ==========================================
-// Tree Lights
-// ==========================================
-function initTreeLights() {
-    const positions = [
-        { x: 25, y: 85 }, { x: 40, y: 88 }, { x: 55, y: 86 }, { x: 70, y: 84 },
-        { x: 28, y: 70 }, { x: 42, y: 73 }, { x: 58, y: 71 }, { x: 72, y: 68 },
-        { x: 32, y: 55 }, { x: 45, y: 58 }, { x: 55, y: 56 }, { x: 68, y: 53 },
-        { x: 36, y: 42 }, { x: 50, y: 45 }, { x: 64, y: 40 },
-        { x: 42, y: 28 }, { x: 50, y: 32 }, { x: 58, y: 27 },
-    ];
-    const colors = ['#ef4444', '#fbbf24', '#22c55e', '#3b82f6', '#f472b6', '#a855f7'];
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
 
-    positions.forEach((pos, i) => {
-        const light = document.createElement('div');
-        light.className = 'light';
-        light.style.left = pos.x + '%';
-        light.style.top = pos.y + '%';
-        light.style.background = colors[i % colors.length];
-        light.style.boxShadow = `0 0 10px ${colors[i % colors.length]}`;
-        light.style.animationDelay = (Math.random() * 1.5) + 's';
-        treeLights.appendChild(light);
-    });
-}
+            const json = await res.json();
+            const str = JSON.stringify(json || {});
 
-// ==========================================
-// Firebase CRUD
-// ==========================================
-async function fetchBalls() {
-    try {
-        const res = await fetch(BALLS_ENDPOINT);
-        const json = await res.json();
-        const str = JSON.stringify(json || {});
+            if (str !== lastData) {
+                lastData = str;
+                balls = json || {};
+                renderBalls();
+            }
 
-        if (str !== lastData) {
-            lastData = str;
-            balls = json || {};
-            renderBalls();
-            updateConnectionStatus(true);
+            fetchRetryCount = 0;
+            updateConnectionStatus('online');
+
+        } catch (err) {
+            console.error('Fetch error:', err);
+            fetchRetryCount++;
+
+            if (err.name === 'AbortError') {
+                updateConnectionStatus('offline');
+                showToast('Connection timeout', 'warning');
+            } else if (fetchRetryCount >= CONFIG.MAX_RETRIES) {
+                updateConnectionStatus('error');
+                showToast('Connection lost. Retrying...', 'error');
+            } else {
+                updateConnectionStatus('offline');
+            }
         }
-    } catch (err) {
-        console.error('Fetch error:', err);
-        updateConnectionStatus(false);
     }
-}
 
-async function addBallToDB(name, x, y) {
-    try {
-        const color = colorFromName(name);
+    async function addBallToDB(name, x, y) {
+        // Rate limiting
+        const now = Date.now();
+        if (now - lastAddTime < CONFIG.RATE_LIMIT_MS) {
+            showToast('Please wait a moment...', 'warning');
+            return false;
+        }
+        lastAddTime = now;
+
+        // Validation
+        const sanitizedName = sanitizeName(name);
+        if (sanitizedName.length < CONFIG.MIN_NAME_LENGTH) {
+            showToast('Name is too short!', 'error');
+            return false;
+        }
+
+        if (!isValidPosition(x, y)) {
+            showToast('Invalid position!', 'error');
+            return false;
+        }
+
+        const color = colorFromName(sanitizedName);
         const payload = {
-            name: name,
-            x: x,
-            y: y,
+            name: sanitizedName,
+            x: Math.round(x * 100) / 100,
+            y: Math.round(y * 100) / 100,
             color: color,
             createdAt: Date.now()
         };
 
-        const res = await fetch(BALLS_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetchWithTimeout(BALLS_ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-        if (res.ok) {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
             playBellSound();
             showToast('Ornament added! 🎄', 'success');
             fetchBalls();
-        } else {
-            throw new Error('Failed to add');
+            return true;
+
+        } catch (err) {
+            console.error('Add error:', err);
+
+            if (err.name === 'AbortError') {
+                showToast('Request timeout. Try again!', 'error');
+            } else {
+                showToast('Failed to add ornament. Try again!', 'error');
+            }
+            return false;
         }
-    } catch (err) {
-        console.error(err);
-        showToast('Failed to add ornament', 'error');
     }
-}
 
-async function updateBallPosition(id, x, y) {
-    try {
-        await fetch(`${BASE_DB}/balls/${id}.json`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ x, y })
+    async function updateBallPosition(id, x, y) {
+        if (!id || !isValidPosition(x, y)) return;
+
+        try {
+            await fetchWithTimeout(`${CONFIG.BASE_DB}/balls/${id}.json`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    x: Math.round(x * 100) / 100,
+                    y: Math.round(y * 100) / 100
+                })
+            });
+        } catch (err) {
+            console.error('Update error:', err);
+            showToast('Position update failed', 'warning');
+        }
+    }
+
+    // ==========================================
+    // Render Balls
+    // ==========================================
+    function renderBalls() {
+        if (isDragging || !ballsContainer) return;
+
+        ballsContainer.innerHTML = '';
+
+        const entries = Object.entries(balls).filter(([id, data]) => {
+            return data && data.name && isValidPosition(data.x, data.y);
         });
-    } catch (err) {
-        console.error('Update error:', err);
+
+        entries.forEach(([id, data]) => {
+            createBallElement(id, data);
+        });
+
+        if (ballCount) {
+            ballCount.textContent = entries.length;
+        }
     }
-}
 
-// ==========================================
-// Render Balls
-// ==========================================
-function renderBalls() {
-    // Don't re-render while dragging
-    if (isDragging) return;
+    function createBallElement(id, data) {
+        if (!ballsContainer || !data) return;
 
-    ballsContainer.innerHTML = '';
-    const entries = Object.entries(balls);
+        const ball = document.createElement('div');
+        ball.className = 'ball';
+        ball.dataset.id = id;
+        ball.style.left = data.x + '%';
+        ball.style.top = data.y + '%';
 
-    entries.forEach(([id, data]) => {
-        createBallElement(id, data);
+        const color = data.color || colorFromName(data.name);
+        ball.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${color} 60%, rgba(0,0,0,0.3))`;
+
+        const safeName = escapeHtml(data.name || '');
+        const displayName = safeName.length > 6 ? safeName.slice(0, 5) + '..' : safeName;
+
+        ball.innerHTML = `
+            <div class="ball-hanger"></div>
+            <div class="ball-cap"></div>
+            <div class="ball-highlight"></div>
+            ${displayName}
+            <div class="ball-tooltip">${safeName}</div>
+        `;
+
+        setupDrag(ball, id);
+        ballsContainer.appendChild(ball);
+    }
+
+    // ==========================================
+    // Drag & Drop
+    // ==========================================
+    function setupDrag(ball, id) {
+        if (!ball || !treeWrapper) return;
+
+        function startDrag(startX, startY, e) {
+            e.preventDefault();
+            e.stopPropagation();
+            isDragging = true;
+
+            const rect = treeWrapper.getBoundingClientRect();
+            const ballRect = ball.getBoundingClientRect();
+
+            let shiftX = startX - ballRect.left - ballRect.width / 2;
+            let shiftY = startY - ballRect.top - ballRect.height / 2;
+
+            ball.style.zIndex = '100';
+            ball.style.transition = 'none';
+
+            function moveAt(pageX, pageY) {
+                let newX = ((pageX - rect.left - shiftX - 19) / rect.width) * 100;
+                let newY = ((pageY - rect.top - shiftY - 19) / rect.height) * 100;
+
+                newX = Math.max(10, Math.min(90, newX));
+                newY = Math.max(8, Math.min(92, newY));
+
+                ball.style.left = newX + '%';
+                ball.style.top = newY + '%';
+            }
+
+            function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+            function onTouchMove(e) {
+                e.preventDefault();
+                if (e.touches[0]) {
+                    moveAt(e.touches[0].pageX, e.touches[0].pageY);
+                }
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+
+            function endDrag() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('touchmove', onTouchMove);
+                document.removeEventListener('mouseup', endDrag);
+                document.removeEventListener('touchend', endDrag);
+                document.removeEventListener('touchcancel', endDrag);
+
+                ball.style.zIndex = '';
+                ball.style.transition = '';
+
+                setTimeout(() => { isDragging = false; }, 100);
+
+                const newX = parseFloat(ball.style.left);
+                const newY = parseFloat(ball.style.top);
+
+                if (isValidPosition(newX, newY)) {
+                    updateBallPosition(id, newX, newY);
+                    createSparkleEffect(
+                        (newX / 100) * treeWrapper.offsetWidth + 19,
+                        (newY / 100) * treeWrapper.offsetHeight + 19
+                    );
+                    playBellSound();
+                }
+            }
+
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+            document.addEventListener('touchcancel', endDrag);
+        }
+
+        ball.addEventListener('mousedown', (e) => startDrag(e.pageX, e.pageY, e));
+        ball.addEventListener('touchstart', (e) => {
+            if (e.touches[0]) {
+                startDrag(e.touches[0].pageX, e.touches[0].pageY, e);
+            }
+        }, { passive: false });
+    }
+
+    // ==========================================
+    // Tree Click Handler
+    // ==========================================
+    function isInsideTree(x, y) {
+        if (y < 8 || y > 92) return false;
+        const centerX = 50;
+        const widthAtY = 8 + (y - 8) * 0.5;
+        return Math.abs(x - centerX) < widthAtY;
+    }
+
+    if (treeWrapper) {
+        treeWrapper.addEventListener('click', (e) => {
+            if (isDragging) return;
+
+            const rect = treeWrapper.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            if (isInsideTree(x, y)) {
+                pendingPos = { x, y };
+
+                if (pendingMarker) {
+                    pendingMarker.style.left = x + '%';
+                    pendingMarker.style.top = y + '%';
+                    pendingMarker.classList.add('active');
+                }
+
+                if (addBtn) {
+                    addBtn.className = 'add-btn ready';
+                }
+                if (btnIcon) btnIcon.textContent = '🎁';
+                if (btnText) btnText.textContent = 'Hang It!';
+
+                playBellSound();
+
+                if (nameInput && !nameInput.value.trim()) {
+                    showToast('Enter your name and click Hang It!', 'info');
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // Add Button
+    // ==========================================
+    if (addBtn) {
+        addBtn.addEventListener('click', async () => {
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            if (!name) {
+                showToast('Please enter your name!', 'error');
+                if (nameInput) nameInput.focus();
+                return;
+            }
+
+            if (!pendingPos) {
+                showToast('Click on the tree first!', 'info');
+                return;
+            }
+
+            // Disable button during request
+            addBtn.disabled = true;
+
+            const success = await addBallToDB(name, pendingPos.x, pendingPos.y);
+
+            if (success && treeWrapper) {
+                createSparkleEffect(
+                    (pendingPos.x / 100) * treeWrapper.offsetWidth,
+                    (pendingPos.y / 100) * treeWrapper.offsetHeight
+                );
+            }
+
+            // Reset
+            pendingPos = null;
+            if (pendingMarker) pendingMarker.classList.remove('active');
+            if (nameInput) nameInput.value = '';
+            addBtn.className = 'add-btn waiting';
+            addBtn.disabled = false;
+            if (btnIcon) btnIcon.textContent = '📍';
+            if (btnText) btnText.textContent = 'Pick Spot';
+        });
+    }
+
+    // Enter key support
+    if (nameInput) {
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && addBtn) {
+                addBtn.click();
+            }
+        });
+    }
+
+    // ==========================================
+    // Sound Toggle
+    // ==========================================
+    if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            soundBtn.classList.toggle('active', !isMuted);
+            const waves = $('soundWaves');
+            if (waves) waves.style.opacity = isMuted ? '0.3' : '1';
+        });
+    }
+
+    // ==========================================
+    // Music Toggle
+    // ==========================================
+    if (musicBtn && bgMusic) {
+        musicBtn.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    musicBtn.classList.add('active');
+                }).catch((err) => {
+                    console.warn('Music playback failed:', err);
+                    showToast('Add song.mp3 for music!', 'info');
+                });
+            } else {
+                bgMusic.pause();
+                musicBtn.classList.remove('active');
+            }
+        });
+    }
+
+    // ==========================================
+    // Initialize
+    // ==========================================
+    async function init() {
+        try {
+            initSnow();
+            initStars();
+            initTreeLights();
+
+            await fetchBalls();
+
+            // Start polling
+            pollIntervalId = setInterval(fetchBalls, CONFIG.POLL_INTERVAL);
+
+            // Hide loading
+            setTimeout(() => {
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
+            }, 800);
+
+        } catch (err) {
+            console.error('Initialization error:', err);
+            showToast('Failed to initialize. Please refresh.', 'error');
+
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+        }
     });
 
-    ballCount.textContent = entries.length;
-}
-
-function createBallElement(id, data) {
-    const ball = document.createElement('div');
-    ball.className = 'ball';
-    ball.dataset.id = id;
-    ball.style.left = data.x + '%';
-    ball.style.top = data.y + '%';
-
-    const color = data.color || colorFromName(data.name);
-    ball.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${color} 60%, rgba(0,0,0,0.3))`;
-
-    // Truncate name if too long
-    const displayName = data.name.length > 6 ? data.name.slice(0, 5) + '..' : data.name;
-
-    ball.innerHTML = `
-        <div class="ball-hanger"></div>
-        <div class="ball-cap"></div>
-        <div class="ball-highlight"></div>
-        ${displayName}
-        <div class="ball-tooltip">${escapeHtml(data.name)}</div>
-    `;
-
-    // Drag functionality
-    setupDrag(ball, id);
-
-    ballsContainer.appendChild(ball);
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ==========================================
-// Drag & Drop
-// ==========================================
-function setupDrag(ball, id) {
-    function startDrag(startX, startY, e) {
-        e.preventDefault();
-        isDragging = true;
-
-        const rect = treeWrapper.getBoundingClientRect();
-        const ballRect = ball.getBoundingClientRect();
-
-        let shiftX = startX - ballRect.left - ballRect.width / 2;
-        let shiftY = startY - ballRect.top - ballRect.height / 2;
-
-        ball.style.zIndex = 100;
-        ball.style.transition = 'none';
-
-        function moveAt(pageX, pageY) {
-            let newX = ((pageX - rect.left - shiftX - 19) / rect.width) * 100;
-            let newY = ((pageY - rect.top - shiftY - 19) / rect.height) * 100;
-
-            // Clamp to tree bounds
-            newX = Math.max(10, Math.min(90, newX));
-            newY = Math.max(8, Math.min(92, newY));
-
-            ball.style.left = newX + '%';
-            ball.style.top = newY + '%';
+    // Handle visibility change (pause polling when hidden)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (pollIntervalId) {
+                clearInterval(pollIntervalId);
+                pollIntervalId = null;
+            }
+        } else {
+            fetchBalls();
+            if (!pollIntervalId) {
+                pollIntervalId = setInterval(fetchBalls, CONFIG.POLL_INTERVAL);
+            }
         }
+    });
 
-        function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
-        function onTouchMove(e) {
-            e.preventDefault();
-            moveAt(e.touches[0].pageX, e.touches[0].pageY);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('touchmove', onTouchMove, { passive: false });
-
-        function endDrag() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('touchmove', onTouchMove);
-            document.removeEventListener('mouseup', endDrag);
-            document.removeEventListener('touchend', endDrag);
-
-            ball.style.zIndex = '';
-            ball.style.transition = '';
-            isDragging = false;
-
-            const newX = parseFloat(ball.style.left);
-            const newY = parseFloat(ball.style.top);
-
-            updateBallPosition(id, newX, newY);
-            createSparkleEffect(
-                (newX / 100) * treeWrapper.offsetWidth + 19,
-                (newY / 100) * treeWrapper.offsetHeight + 19
-            );
-            playBellSound();
-        }
-
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchend', endDrag);
-    }
-
-    ball.addEventListener('mousedown', (e) => startDrag(e.pageX, e.pageY, e));
-    ball.addEventListener('touchstart', (e) => startDrag(e.touches[0].pageX, e.touches[0].pageY, e), { passive: false });
-}
-
-// ==========================================
-// Tree Click Handler
-// ==========================================
-function isInsideTree(x, y) {
-    if (y < 8 || y > 92) return false;
-    const centerX = 50;
-    const widthAtY = 8 + (y - 8) * 0.5;
-    return Math.abs(x - centerX) < widthAtY;
-}
-
-treeWrapper.addEventListener('click', (e) => {
-    if (isDragging) return;
-
-    const rect = treeWrapper.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    if (isInsideTree(x, y)) {
-        pendingPos = { x, y };
-        pendingMarker.style.left = x + '%';
-        pendingMarker.style.top = y + '%';
-        pendingMarker.classList.add('active');
-
-        addBtn.className = 'add-btn ready';
-        btnIcon.textContent = '🎁';
-        btnText.textContent = 'Hang It!';
-
-        playBellSound();
-
-        if (!nameInput.value.trim()) {
-            showToast('Enter your name and click Hang It!', 'info');
-        }
-    }
-});
-
-// ==========================================
-// Add Button
-// ==========================================
-addBtn.addEventListener('click', () => {
-    const name = nameInput.value.trim();
-
-    if (!name) {
-        showToast('Please enter your name!', 'error');
-        nameInput.focus();
-        return;
-    }
-
-    if (!pendingPos) {
-        showToast('Click on the tree first!', 'info');
-        return;
-    }
-
-    addBallToDB(name, pendingPos.x, pendingPos.y);
-
-    // Create sparkle at pending position
-    createSparkleEffect(
-        (pendingPos.x / 100) * treeWrapper.offsetWidth,
-        (pendingPos.y / 100) * treeWrapper.offsetHeight
-    );
-
-    // Reset
-    pendingPos = null;
-    pendingMarker.classList.remove('active');
-    nameInput.value = '';
-    addBtn.className = 'add-btn waiting';
-    btnIcon.textContent = '📍';
-    btnText.textContent = 'Pick Spot';
-});
-
-// Enter key support
-nameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addBtn.click();
-});
-
-// ==========================================
-// Sound Toggle
-// ==========================================
-soundBtn.addEventListener('click', () => {
-    isMuted = !isMuted;
-    soundBtn.classList.toggle('active', !isMuted);
-    document.getElementById('soundWaves').style.opacity = isMuted ? '0.3' : '1';
-});
-
-// ==========================================
-// Music Toggle
-// ==========================================
-musicBtn.addEventListener('click', () => {
-    if (bgMusic.paused) {
-        bgMusic.play().catch(() => {
-            showToast('Add song.mp3 for music!', 'info');
-        });
-        musicBtn.classList.add('active');
+    // Start
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        bgMusic.pause();
-        musicBtn.classList.remove('active');
+        init();
     }
-});
-
-// ==========================================
-// Initialize
-// ==========================================
-async function init() {
-    initSnow();
-    initStars();
-    initTreeLights();
-
-    // Initial fetch
-    await fetchBalls();
-
-    // Poll for updates every 2 seconds
-    setInterval(fetchBalls, 2000);
-
-    // Hide loading
-    setTimeout(() => {
-        loadingOverlay.classList.add('hidden');
-    }, 800);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
-}
+})();
 </script>
 </body>
 </html>

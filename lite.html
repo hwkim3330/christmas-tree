@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Tree Lite 🎄</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #0a1628 0%, #1a365d 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            padding: 20px;
+            user-select: none;
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 20px; text-align: center; }
+        .tree-area {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .tree {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .ball {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            margin: -15px 0 0 -15px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            cursor: grab;
+            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3), 2px 2px 6px rgba(0,0,0,0.4);
+            transition: transform 0.2s;
+        }
+        .ball:hover { transform: scale(1.2); }
+        .ball::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 8px;
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+        .pending {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            margin: -18px 0 0 -18px;
+            border: 2px dashed white;
+            border-radius: 50%;
+            display: none;
+            animation: spin 2s linear infinite;
+        }
+        .pending.active { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .controls {
+            background: rgba(0,0,0,0.4);
+            padding: 16px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 320px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.9);
+        }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #dc2626;
+            color: white;
+            font-size: 14px;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+        .status span { color: #4ade80; }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <h1>🎄 Shared Christmas Tree</h1>
+
+    <div class="tree-area" id="treeArea">
+        <svg class="tree" viewBox="0 0 300 400">
+            <!-- Trunk -->
+            <rect x="125" y="340" width="50" height="60" fill="#5d4037"/>
+            <!-- Tree layers -->
+            <polygon points="150,20 50,150 250,150" fill="#1b5e20"/>
+            <polygon points="150,80 30,220 270,220" fill="#2e7d32"/>
+            <polygon points="150,150 10,340 290,340" fill="#388e3c"/>
+            <!-- Star -->
+            <text x="150" y="35" text-anchor="middle" font-size="30">⭐</text>
+        </svg>
+        <div class="pending" id="pending"></div>
+        <div id="balls"></div>
+    </div>
+
+    <div class="controls">
+        <div class="input-row">
+            <input type="text" id="nameInput" placeholder="Your name..." maxlength="10">
+            <button id="addBtn">Add</button>
+        </div>
+        <div class="status">
+            🎄 <span id="count">0</span> ornaments | <span id="status">connecting...</span>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+<script>
+const DB = "https://christmas-tree-ef839-default-rtdb.firebaseio.com";
+const COLORS = ["#e74c3c","#f1c40f","#9b59b6","#3498db","#1abc9c","#e67e22","#ff6b6b"];
+
+let balls = {}, pending = null, dragging = false;
+const $ = id => document.getElementById(id);
+
+function color(name) {
+    let n = 0;
+    for (let i = 0; i < name.length; i++) n = (n * 31 + name.charCodeAt(i)) >>> 0;
+    return COLORS[n % COLORS.length];
+}
+
+function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function inTree(x, y) {
+    if (y < 5 || y > 85) return false;
+    const w = 5 + y * 0.5;
+    return Math.abs(x - 50) < w;
+}
+
+async function load() {
+    try {
+        const r = await fetch(DB + "/balls.json");
+        if (!r.ok) throw new Error();
+        balls = await r.json() || {};
+        render();
+        $('status').textContent = 'synced';
+        $('status').style.color = '#4ade80';
+    } catch {
+        $('status').textContent = 'offline';
+        $('status').style.color = '#fbbf24';
+    }
+}
+
+function render() {
+    if (dragging) return;
+    const c = $('balls');
+    c.innerHTML = '';
+    const entries = Object.entries(balls);
+    entries.forEach(([id, d]) => {
+        if (!d || !d.name) return;
+        const b = document.createElement('div');
+        b.className = 'ball';
+        b.style.left = d.x + '%';
+        b.style.top = d.y + '%';
+        b.style.background = d.color || color(d.name);
+        b.textContent = d.name.slice(0, 4);
+        b.title = d.name;
+        setupDrag(b, id);
+        c.appendChild(b);
+    });
+    $('count').textContent = entries.length;
+}
+
+function setupDrag(el, id) {
+    el.onmousedown = el.ontouchstart = e => {
+        e.preventDefault();
+        dragging = true;
+        const rect = $('treeArea').getBoundingClientRect();
+        const move = (px, py) => {
+            let x = ((px - rect.left) / rect.width) * 100;
+            let y = ((py - rect.top) / rect.height) * 100;
+            x = Math.max(10, Math.min(90, x));
+            y = Math.max(5, Math.min(85, y));
+            el.style.left = x + '%';
+            el.style.top = y + '%';
+        };
+        const onMove = ev => move(ev.pageX || ev.touches[0].pageX, ev.pageY || ev.touches[0].pageY);
+        const onEnd = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchend', onEnd);
+            dragging = false;
+            const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+            fetch(`${DB}/balls/${id}.json`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({x, y})
+            }).catch(() => {});
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchend', onEnd);
+    };
+}
+
+$('treeArea').onclick = e => {
+    if (dragging) return;
+    const rect = $('treeArea').getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    if (inTree(x, y)) {
+        pending = {x, y};
+        $('pending').style.left = x + '%';
+        $('pending').style.top = y + '%';
+        $('pending').classList.add('active');
+        if (!$('nameInput').value) toast('Enter name & click Add');
+    }
+};
+
+$('addBtn').onclick = async () => {
+    const name = $('nameInput').value.trim();
+    if (!name) return toast('Enter your name!');
+    if (!pending) return toast('Click tree first!');
+
+    $('addBtn').disabled = true;
+    try {
+        await fetch(DB + "/balls.json", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, x: pending.x, y: pending.y, color: color(name), t: Date.now()})
+        });
+        toast('Added! 🎄');
+        load();
+    } catch { toast('Failed!'); }
+
+    pending = null;
+    $('pending').classList.remove('active');
+    $('nameInput').value = '';
+    $('addBtn').disabled = false;
+};
+
+$('nameInput').onkeypress = e => e.key === 'Enter' && $('addBtn').click();
+
+load();
+setInterval(load, 3000);
+</script>
+</body>
+</html>
