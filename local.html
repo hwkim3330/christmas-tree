@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Christmas Tree 🎄 (Offline)</title>
+    <meta name="description" content="Personal offline Christmas tree - decorate your own tree!">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(to bottom, #020617 0%, #172554 50%, #1e293b 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #snowCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .background {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .moon {
+            position: absolute;
+            top: 40px;
+            right: 10%;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fffde7, #fef9c3 50%, #fef08a);
+            box-shadow: 0 0 50px rgba(255, 255, 200, 0.5);
+        }
+
+        .stars { position: absolute; width: 100%; height: 100%; }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to top, #e2e8f0, #f1f5f9 50%, transparent);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            transform: scaleX(1.5);
+        }
+
+        .container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .header {
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .offline-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border-radius: 10px;
+        }
+
+        .tree-container {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 180px;
+            width: 100%;
+            max-width: 500px;
+            z-index: 15;
+        }
+
+        .tree-wrapper {
+            position: relative;
+            width: 320px;
+            height: 450px;
+            cursor: pointer;
+            filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
+        }
+
+        @media (min-width: 640px) {
+            .tree-wrapper { width: 380px; height: 530px; }
+        }
+
+        .tree-svg { width: 100%; height: 100%; }
+
+        .tree-star {
+            position: absolute;
+            top: 2%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 44px;
+            filter: drop-shadow(0 0 15px rgba(253, 224, 71, 0.8));
+            animation: pulse 2s infinite;
+            z-index: 30;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+
+        .ball {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            margin-left: -18px;
+            margin-top: -18px;
+            border-radius: 50%;
+            cursor: grab;
+            z-index: 40;
+            transition: transform 0.15s;
+            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.2);
+            animation: ballPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .ball:hover { transform: scale(1.2); z-index: 50; }
+        .ball:active { cursor: grabbing; }
+
+        @keyframes ballPop {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        .ball-cap {
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 5px;
+            background: linear-gradient(#ffd700, #b8860b);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .ball-highlight {
+            position: absolute;
+            top: 5px;
+            right: 7px;
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.35);
+            border-radius: 50%;
+            filter: blur(1px);
+            pointer-events: none;
+        }
+
+        .ball-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+        .ball:hover .ball-tooltip { opacity: 1; }
+
+        .pending {
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            margin-left: -23px;
+            margin-top: -23px;
+            border: 3px dashed rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            animation: spin 3s linear infinite;
+            z-index: 45;
+            display: none;
+        }
+        .pending.active { display: flex; align-items: center; justify-content: center; }
+        .pending-dot {
+            width: 10px;
+            height: 10px;
+            background: #fbbf24;
+            border-radius: 50%;
+            animation: ping 1s infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes ping {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+        }
+
+        .lights {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .light {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            animation: glow 1.5s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+        }
+
+        .control-panel {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .name-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.4);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+        .name-input::placeholder { color: rgba(148, 163, 184, 0.5); }
+        .name-input:focus { border-color: #fbbf24; }
+
+        .add-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-btn.ready {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+        }
+        .add-btn.ready:hover { transform: translateY(-2px); }
+        .add-btn.waiting {
+            background: rgba(71, 85, 105, 0.5);
+            color: rgba(148, 163, 184, 0.7);
+            cursor: not-allowed;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .count {
+            color: rgba(148, 163, 184, 0.7);
+            font-size: 13px;
+        }
+
+        .btn-group { display: flex; gap: 6px; }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: rgba(148, 163, 184, 0.7);
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .icon-btn.danger:hover { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 12px 22px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { background: rgba(6, 78, 59, 0.9); color: #a7f3d0; }
+        .toast.info { background: rgba(30, 58, 138, 0.9); color: #bfdbfe; }
+        .toast.error { background: rgba(127, 29, 29, 0.9); color: #fecaca; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-box {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+        }
+        .modal-box h3 { color: white; margin-bottom: 12px; }
+        .modal-box p { color: rgba(148, 163, 184, 0.8); font-size: 14px; margin-bottom: 20px; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-btn.cancel { background: rgba(71, 85, 105, 0.5); color: white; }
+        .modal-btn.danger { background: #dc2626; color: white; }
+    </style>
+</head>
+<body>
+
+<canvas id="snowCanvas"></canvas>
+
+<div class="background">
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+    <div class="ground"></div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>My Christmas Tree 🎄</h1>
+        <span class="offline-badge">offline</span>
+    </div>
+
+    <div class="tree-container">
+        <div class="tree-wrapper" id="tree">
+            <div class="tree-star">⭐</div>
+
+            <svg class="tree-svg" viewBox="0 0 400 500">
+                <defs>
+                    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#052e16"/>
+                        <stop offset="50%" stop-color="#14532d"/>
+                        <stop offset="100%" stop-color="#052e16"/>
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#166534"/>
+                        <stop offset="100%" stop-color="#14532d"/>
+                    </linearGradient>
+                </defs>
+                <rect x="175" y="445" width="50" height="55" rx="3" fill="#4a3728"/>
+                <path d="M30 440 Q100 460 200 470 Q300 460 370 440 L340 355 Q200 330 60 355 Z" fill="url(#g1)"/>
+                <path d="M50 430 Q130 450 200 460 Q270 450 350 430 L200 310 Z" fill="url(#g2)" opacity="0.85"/>
+                <path d="M55 360 Q130 380 200 390 Q270 380 345 360 L305 275 Q200 250 95 275 Z" fill="url(#g1)"/>
+                <path d="M75 350 Q140 365 200 375 Q260 365 325 350 L200 230 Z" fill="url(#g2)" opacity="0.85"/>
+                <path d="M85 280 Q145 295 200 305 Q255 295 315 280 L280 200 Q200 175 120 200 Z" fill="url(#g1)"/>
+                <path d="M100 270 Q150 285 200 295 Q250 285 300 270 L200 160 Z" fill="#15803d" opacity="0.85"/>
+                <path d="M115 200 Q160 215 200 220 Q240 215 285 200 L255 130 Q200 110 145 130 Z" fill="url(#g1)"/>
+                <path d="M130 190 Q165 200 200 210 Q235 200 270 190 L200 95 Z" fill="#22c55e" opacity="0.8"/>
+                <path d="M145 125 Q175 135 200 140 Q225 135 255 125 L200 45 Z" fill="url(#g1)"/>
+                <path d="M160 115 Q180 125 200 130 Q220 125 240 115 L200 35 Z" fill="#4ade80" opacity="0.7"/>
+            </svg>
+
+            <div class="lights" id="lights"></div>
+            <div id="balls"></div>
+            <div class="pending" id="pending"><div class="pending-dot"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="controls">
+    <div class="control-panel">
+        <div class="input-row">
+            <input type="text" class="name-input" id="nameInput" placeholder="Your name..." maxlength="12">
+            <button class="add-btn waiting" id="addBtn">
+                <span id="btnIcon">📍</span>
+                <span id="btnText">Pick Spot</span>
+            </button>
+        </div>
+        <div class="status-row">
+            <span class="count">🎄 <span id="count">0</span> ornaments</span>
+            <div class="btn-group">
+                <button class="icon-btn" id="exportBtn" title="Export Data">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="importBtn" title="Import Data">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                </button>
+                <button class="icon-btn danger" id="clearBtn" title="Clear All">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h3>Clear All Ornaments?</h3>
+        <p>This will remove all ornaments from your tree. This action cannot be undone.</p>
+        <div class="modal-btns">
+            <button class="modal-btn cancel" id="modalCancel">Cancel</button>
+            <button class="modal-btn danger" id="modalConfirm">Clear All</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none">
+
+<script>
+(function() {
+    'use strict';
+
+    const STORAGE_KEY = 'my_christmas_tree_v1';
+    const COLORS = [
+        "#e74c3c", "#c0392b", "#f1c40f", "#f39c12",
+        "#9b59b6", "#8e44ad", "#3498db", "#2980b9",
+        "#1abc9c", "#16a085", "#e67e22", "#d35400"
+    ];
+
+    let ornaments = [];
+    let pendingPos = null;
+    let isDragging = false;
+
+    const $ = id => document.getElementById(id);
+    const tree = $('tree');
+    const ballsContainer = $('balls');
+    const pending = $('pending');
+    const nameInput = $('nameInput');
+    const addBtn = $('addBtn');
+    const btnIcon = $('btnIcon');
+    const btnText = $('btnText');
+    const countEl = $('count');
+    const toast = $('toast');
+    const modal = $('modal');
+    const lights = $('lights');
+    const stars = $('stars');
+
+    // Color from name
+    function color(name) {
+        if (!name) return COLORS[0];
+        let n = 0;
+        for (let i = 0; i < name.length; i++) n = (n * 31 + name.charCodeAt(i)) >>> 0;
+        return COLORS[n % COLORS.length];
+    }
+
+    // Toast
+    let toastTimer;
+    function showToast(msg, type = 'info') {
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // Storage
+    function load() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            ornaments = data ? JSON.parse(data) : [];
+        } catch { ornaments = []; }
+    }
+
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ornaments));
+        } catch (e) {
+            showToast('Storage full!', 'error');
+        }
+    }
+
+    // Render
+    function render() {
+        if (isDragging) return;
+        ballsContainer.innerHTML = '';
+
+        ornaments.forEach((o, i) => {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.style.left = o.x + '%';
+            ball.style.top = o.y + '%';
+            ball.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${o.color || color(o.name)} 60%, rgba(0,0,0,0.3))`;
+
+            const displayName = o.name.length > 5 ? o.name.slice(0, 4) + '..' : o.name;
+            ball.innerHTML = `
+                <div class="ball-cap"></div>
+                <div class="ball-highlight"></div>
+                ${displayName}
+                <div class="ball-tooltip">${o.name}</div>
+            `;
+
+            setupDrag(ball, i);
+            ballsContainer.appendChild(ball);
+        });
+
+        countEl.textContent = ornaments.length;
+    }
+
+    // Drag
+    function setupDrag(el, index) {
+        function start(sx, sy, e) {
+            e.preventDefault();
+            e.stopPropagation();
+            isDragging = true;
+
+            const rect = tree.getBoundingClientRect();
+            el.style.zIndex = '100';
+            el.style.transition = 'none';
+
+            function move(px, py) {
+                let x = ((px - rect.left) / rect.width) * 100;
+                let y = ((py - rect.top) / rect.height) * 100;
+                x = Math.max(10, Math.min(90, x));
+                y = Math.max(8, Math.min(90, y));
+                el.style.left = x + '%';
+                el.style.top = y + '%';
+            }
+
+            const onMove = e => move(e.pageX || e.touches?.[0]?.pageX, e.pageY || e.touches?.[0]?.pageY);
+
+            function end() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('mouseup', end);
+                document.removeEventListener('touchend', end);
+
+                el.style.zIndex = '';
+                el.style.transition = '';
+
+                const x = parseFloat(el.style.left);
+                const y = parseFloat(el.style.top);
+
+                ornaments[index].x = x;
+                ornaments[index].y = y;
+                save();
+
+                setTimeout(() => { isDragging = false; }, 50);
+            }
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('mouseup', end);
+            document.addEventListener('touchend', end);
+        }
+
+        el.addEventListener('mousedown', e => start(e.pageX, e.pageY, e));
+        el.addEventListener('touchstart', e => start(e.touches[0].pageX, e.touches[0].pageY, e), { passive: false });
+    }
+
+    // Tree click
+    function inTree(x, y) {
+        if (y < 8 || y > 90) return false;
+        return Math.abs(x - 50) < (8 + (y - 8) * 0.5);
+    }
+
+    tree.addEventListener('click', e => {
+        if (isDragging) return;
+        const rect = tree.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        if (inTree(x, y)) {
+            pendingPos = { x, y };
+            pending.style.left = x + '%';
+            pending.style.top = y + '%';
+            pending.classList.add('active');
+
+            addBtn.className = 'add-btn ready';
+            btnIcon.textContent = '🎁';
+            btnText.textContent = 'Hang It!';
+
+            if (!nameInput.value.trim()) {
+                showToast('Enter name & click Hang It!', 'info');
+            }
+        }
+    });
+
+    // Add
+    addBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim().slice(0, 12);
+        if (!name) {
+            showToast('Enter your name!', 'error');
+            nameInput.focus();
+            return;
+        }
+        if (!pendingPos) {
+            showToast('Click tree first!', 'info');
+            return;
+        }
+
+        ornaments.push({
+            name,
+            x: pendingPos.x,
+            y: pendingPos.y,
+            color: color(name),
+            time: Date.now()
+        });
+
+        save();
+        render();
+        showToast('Ornament added! 🎄', 'success');
+
+        pendingPos = null;
+        pending.classList.remove('active');
+        nameInput.value = '';
+        addBtn.className = 'add-btn waiting';
+        btnIcon.textContent = '📍';
+        btnText.textContent = 'Pick Spot';
+    });
+
+    nameInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') addBtn.click();
+    });
+
+    // Export
+    $('exportBtn').addEventListener('click', () => {
+        if (ornaments.length === 0) {
+            showToast('No ornaments to export', 'info');
+            return;
+        }
+        const data = JSON.stringify(ornaments, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `christmas-tree-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Exported!', 'success');
+    });
+
+    // Import
+    const fileInput = $('fileInput');
+    $('importBtn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!Array.isArray(data)) throw new Error();
+                ornaments = data.filter(o => o.name && typeof o.x === 'number' && typeof o.y === 'number');
+                save();
+                render();
+                showToast(`Imported ${ornaments.length} ornaments!`, 'success');
+            } catch {
+                showToast('Invalid file!', 'error');
+            }
+        };
+        reader.readAsText(file);
+        fileInput.value = '';
+    });
+
+    // Clear
+    $('clearBtn').addEventListener('click', () => modal.classList.add('show'));
+    $('modalCancel').addEventListener('click', () => modal.classList.remove('show'));
+    $('modalConfirm').addEventListener('click', () => {
+        ornaments = [];
+        save();
+        render();
+        modal.classList.remove('show');
+        showToast('All cleared!', 'success');
+    });
+    modal.addEventListener('click', e => {
+        if (e.target === modal) modal.classList.remove('show');
+    });
+
+    // Snow
+    function initSnow() {
+        const canvas = $('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const particles = [];
+        const count = Math.min(120, Math.floor(window.innerWidth / 8));
+
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 2 + 0.5,
+                vx: Math.random() * 0.3 - 0.15,
+                vy: Math.random() * 1 + 0.3,
+                o: Math.random() * 0.4 + 0.3
+            });
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const p of particles) {
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+                p.y += p.vy;
+                p.x += p.vx + Math.sin(p.y / 80) * 0.2;
+                if (p.y > canvas.height) { p.y = -5; p.x = Math.random() * canvas.width; }
+                if (p.x > canvas.width) p.x = 0;
+                if (p.x < 0) p.x = canvas.width;
+            }
+            requestAnimationFrame(render);
+        }
+        render();
+    }
+
+    // Stars
+    function initStars() {
+        for (let i = 0; i < 40; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 50 + '%';
+            s.style.width = s.style.height = (Math.random() * 2 + 1) + 'px';
+            s.style.animationDelay = Math.random() * 2 + 's';
+            stars.appendChild(s);
+        }
+    }
+
+    // Lights
+    function initLights() {
+        const pos = [
+            {x:25,y:85},{x:40,y:88},{x:55,y:86},{x:70,y:84},
+            {x:28,y:70},{x:42,y:73},{x:58,y:71},{x:72,y:68},
+            {x:32,y:55},{x:45,y:58},{x:55,y:56},{x:68,y:53},
+            {x:36,y:42},{x:50,y:45},{x:64,y:40},
+            {x:42,y:28},{x:58,y:27}
+        ];
+        const colors = ['#ef4444','#fbbf24','#22c55e','#3b82f6','#f472b6','#a855f7'];
+
+        pos.forEach((p, i) => {
+            const l = document.createElement('div');
+            l.className = 'light';
+            l.style.left = p.x + '%';
+            l.style.top = p.y + '%';
+            l.style.background = colors[i % colors.length];
+            l.style.boxShadow = `0 0 8px ${colors[i % colors.length]}`;
+            l.style.animationDelay = Math.random() * 1.5 + 's';
+            lights.appendChild(l);
+        });
+    }
+
+    // Init
+    load();
+    render();
+    initSnow();
+    initStars();
+    initLights();
+})();
+</script>
+</body>
+</html>
