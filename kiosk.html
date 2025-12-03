@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Tree Kiosk 🎄</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #172554 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+        #snow {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+        .moon {
+            position: absolute;
+            top: 8%;
+            right: 12%;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fffde7, #fef9c3 50%, #fef08a);
+            box-shadow: 0 0 80px rgba(255,255,200,0.5);
+        }
+        .stars { position: absolute; width: 100%; height: 100%; }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 15vh;
+            background: linear-gradient(to top, #e2e8f0, #f1f5f9 50%, transparent);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            transform: scaleX(1.5);
+        }
+
+        .main {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5vw;
+            padding: 3vh 5vw;
+            z-index: 10;
+        }
+
+        .tree-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 50vw;
+        }
+
+        .tree-wrap {
+            position: relative;
+            width: min(45vw, 500px);
+            height: min(85vh, 700px);
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+        }
+        .tree-wrap svg { width: 100%; height: 100%; }
+
+        .star-top {
+            position: absolute;
+            top: 1%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(40px, 6vw, 70px);
+            filter: drop-shadow(0 0 25px rgba(253,224,71,0.9));
+            animation: starPulse 2s infinite;
+            z-index: 30;
+        }
+        @keyframes starPulse {
+            0%, 100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+            50% { transform: translateX(-50%) scale(1.15) rotate(5deg); }
+        }
+
+        .ball {
+            position: absolute;
+            width: clamp(35px, 4vw, 50px);
+            height: clamp(35px, 4vw, 50px);
+            margin-left: calc(clamp(35px, 4vw, 50px) / -2);
+            margin-top: calc(clamp(35px, 4vw, 50px) / -2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(9px, 1.2vw, 14px);
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+            box-shadow: inset -4px -4px 12px rgba(0,0,0,0.3), 3px 5px 15px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.25);
+            animation: ballAppear 0.6s cubic-bezier(0.34,1.56,0.64,1);
+            z-index: 40;
+        }
+        @keyframes ballAppear { from { transform: scale(0) rotate(-180deg); } to { transform: scale(1) rotate(0); } }
+        .ball::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+
+        .lights {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .light {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: glow 1.5s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        .info-section {
+            flex: 0.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3vh;
+            color: white;
+        }
+
+        .title {
+            font-size: clamp(2rem, 4vw, 4rem);
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, #fef3c7, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+
+        .stats {
+            display: flex;
+            gap: 3vw;
+            margin-top: 2vh;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 2vh 3vw;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-num {
+            font-size: clamp(2.5rem, 5vw, 5rem);
+            font-weight: bold;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: clamp(0.8rem, 1.2vw, 1.2rem);
+            color: rgba(255,255,255,0.6);
+            margin-top: 0.5vh;
+        }
+
+        .recent {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .recent-title {
+            font-size: clamp(1rem, 1.5vw, 1.3rem);
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 1.5vh;
+            text-align: center;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+            max-height: 25vh;
+            overflow: hidden;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            padding: 1.2vh 1.5vw;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .recent-ball {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .recent-name {
+            font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+            color: white;
+        }
+
+        .recent-time {
+            margin-left: auto;
+            font-size: clamp(0.7rem, 1vw, 0.9rem);
+            color: rgba(255,255,255,0.4);
+        }
+
+        .qr-section {
+            text-align: center;
+            margin-top: 2vh;
+        }
+
+        .qr-label {
+            font-size: clamp(0.8rem, 1.2vw, 1rem);
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 1vh;
+        }
+
+        .qr-box {
+            width: clamp(80px, 10vw, 120px);
+            height: clamp(80px, 10vw, 120px);
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-size: clamp(50px, 7vw, 80px);
+        }
+
+        .clock {
+            position: fixed;
+            top: 3vh;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+            color: rgba(255,255,255,0.8);
+            font-weight: 300;
+            z-index: 100;
+        }
+
+        @media (max-width: 900px) {
+            .main { flex-direction: column; gap: 2vh; padding: 2vh; }
+            .tree-section { max-width: 80vw; }
+            .tree-wrap { width: min(70vw, 300px); height: min(50vh, 400px); }
+            .info-section { gap: 1.5vh; }
+            .stats { gap: 5vw; }
+        }
+    </style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+
+<div class="bg">
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+    <div class="ground"></div>
+</div>
+
+<div class="clock" id="clock"></div>
+
+<div class="main">
+    <div class="tree-section">
+        <div class="tree-wrap" id="tree">
+            <div class="star-top">⭐</div>
+            <svg viewBox="0 0 400 500">
+                <defs>
+                    <linearGradient id="g1" x1="0%" y1="0%" x2="100%">
+                        <stop offset="0%" stop-color="#052e16"/>
+                        <stop offset="50%" stop-color="#14532d"/>
+                        <stop offset="100%" stop-color="#052e16"/>
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#166534"/>
+                        <stop offset="100%" stop-color="#14532d"/>
+                    </linearGradient>
+                </defs>
+                <rect x="175" y="445" width="50" height="55" rx="3" fill="#4a3728"/>
+                <!-- Presents -->
+                <g transform="translate(80,465)"><rect y="10" width="45" height="35" rx="3" fill="#dc2626"/><rect x="18" y="10" width="9" height="35" fill="#fbbf24"/><rect y="22" width="45" height="7" fill="#fbbf24"/><path d="M15 10 Q22.5 0 30 10" fill="none" stroke="#fbbf24" stroke-width="3"/><circle cx="22.5" cy="5" r="4" fill="#fbbf24"/></g>
+                <g transform="translate(275,468)"><rect y="8" width="40" height="30" rx="3" fill="#3b82f6"/><rect x="16" y="8" width="8" height="30" fill="#f472b6"/><rect y="18" width="40" height="6" fill="#f472b6"/><path d="M12 8 Q20 -2 28 8" fill="none" stroke="#f472b6" stroke-width="3"/><circle cx="20" cy="3" r="3.5" fill="#f472b6"/></g>
+                <g transform="translate(130,478)"><rect y="5" width="30" height="22" rx="2" fill="#22c55e"/><rect x="12" y="5" width="6" height="22" fill="#fef08a"/><rect y="13" width="30" height="5" fill="#fef08a"/></g>
+                <g transform="translate(235,475)"><rect y="8" width="35" height="25" rx="2" fill="#a855f7"/><rect x="14" y="8" width="7" height="25" fill="#fcd34d"/><rect y="17" width="35" height="5" fill="#fcd34d"/></g>
+                <!-- Tree -->
+                <path d="M30 440 Q100 460 200 470 Q300 460 370 440 L340 355 Q200 330 60 355 Z" fill="url(#g1)"/>
+                <path d="M50 430 Q130 450 200 460 Q270 450 350 430 L200 310 Z" fill="url(#g2)" opacity="0.85"/>
+                <path d="M55 360 Q130 380 200 390 Q270 380 345 360 L305 275 Q200 250 95 275 Z" fill="url(#g1)"/>
+                <path d="M75 350 Q140 365 200 375 Q260 365 325 350 L200 230 Z" fill="url(#g2)" opacity="0.85"/>
+                <path d="M85 280 Q145 295 200 305 Q255 295 315 280 L280 200 Q200 175 120 200 Z" fill="url(#g1)"/>
+                <path d="M100 270 Q150 285 200 295 Q250 285 300 270 L200 160 Z" fill="#15803d" opacity="0.85"/>
+                <path d="M115 200 Q160 215 200 220 Q240 215 285 200 L255 130 Q200 110 145 130 Z" fill="url(#g1)"/>
+                <path d="M130 190 Q165 200 200 210 Q235 200 270 190 L200 95 Z" fill="#22c55e" opacity="0.8"/>
+                <path d="M145 125 Q175 135 200 140 Q225 135 255 125 L200 45 Z" fill="url(#g1)"/>
+                <path d="M160 115 Q180 125 200 130 Q220 125 240 115 L200 35 Z" fill="#4ade80" opacity="0.7"/>
+            </svg>
+            <div class="lights" id="lights"></div>
+            <div id="balls"></div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h1 class="title">Shared Christmas Tree</h1>
+        <p class="subtitle">함께 만드는 크리스마스 트리</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-num" id="count">0</div>
+                <div class="stat-label">Ornaments</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="today">0</div>
+                <div class="stat-label">Today</div>
+            </div>
+        </div>
+
+        <div class="recent">
+            <div class="recent-title">✨ Recent Additions</div>
+            <div class="recent-list" id="recent"></div>
+        </div>
+
+        <div class="qr-section">
+            <div class="qr-label">Scan to add your ornament!</div>
+            <div class="qr-box">🎄</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const DB = "https://christmas-tree-ef839-default-rtdb.firebaseio.com";
+const COLORS = ["#e74c3c","#c0392b","#f1c40f","#f39c12","#9b59b6","#8e44ad","#3498db","#2980b9","#1abc9c","#16a085","#e67e22","#d35400"];
+let balls = {}, lastData = '';
+
+function color(name) {
+    let n = 0;
+    for (let i = 0; i < name.length; i++) n = (n * 31 + name.charCodeAt(i)) >>> 0;
+    return COLORS[n % COLORS.length];
+}
+
+function timeAgo(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
+}
+
+async function load() {
+    try {
+        const r = await fetch(DB + "/balls.json");
+        const data = await r.json() || {};
+        const str = JSON.stringify(data);
+        if (str !== lastData) {
+            lastData = str;
+            balls = data;
+            render();
+        }
+    } catch {}
+}
+
+function render() {
+    const c = document.getElementById('balls');
+    c.innerHTML = '';
+    const entries = Object.entries(balls).filter(([,d]) => d?.name);
+
+    entries.forEach(([id, d]) => {
+        const b = document.createElement('div');
+        b.className = 'ball';
+        b.style.left = d.x + '%';
+        b.style.top = d.y + '%';
+        b.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${d.color || color(d.name)} 60%, rgba(0,0,0,0.3))`;
+        b.textContent = d.name.slice(0, 5);
+        c.appendChild(b);
+    });
+
+    document.getElementById('count').textContent = entries.length;
+
+    // Today count
+    const today = new Date().setHours(0,0,0,0);
+    const todayCount = entries.filter(([,d]) => d.createdAt && d.createdAt > today).length;
+    document.getElementById('today').textContent = todayCount;
+
+    // Recent
+    const recent = document.getElementById('recent');
+    recent.innerHTML = '';
+    const sorted = entries.sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0)).slice(0, 5);
+    sorted.forEach(([id, d]) => {
+        const item = document.createElement('div');
+        item.className = 'recent-item';
+        item.innerHTML = `
+            <div class="recent-ball" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${d.color || color(d.name)} 60%, rgba(0,0,0,0.3))"></div>
+            <span class="recent-name">${d.name}</span>
+            <span class="recent-time">${d.createdAt ? timeAgo(d.createdAt) : ''}</span>
+        `;
+        recent.appendChild(item);
+    });
+}
+
+// Clock
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Stars
+const stars = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 50 + '%';
+    s.style.width = s.style.height = (Math.random() * 2 + 1) + 'px';
+    s.style.animationDelay = Math.random() * 2 + 's';
+    stars.appendChild(s);
+}
+
+// Lights
+const lightPos = [
+    {x:25,y:85},{x:40,y:88},{x:55,y:86},{x:70,y:84},{x:28,y:70},{x:42,y:73},{x:58,y:71},{x:72,y:68},
+    {x:32,y:55},{x:45,y:58},{x:55,y:56},{x:68,y:53},{x:36,y:42},{x:50,y:45},{x:64,y:40},{x:42,y:28},{x:58,y:27}
+];
+const lightColors = ['#ef4444','#fbbf24','#22c55e','#3b82f6','#f472b6','#a855f7'];
+const lightsEl = document.getElementById('lights');
+lightPos.forEach((p, i) => {
+    const l = document.createElement('div');
+    l.className = 'light';
+    l.style.left = p.x + '%';
+    l.style.top = p.y + '%';
+    l.style.background = lightColors[i % lightColors.length];
+    l.style.boxShadow = `0 0 12px ${lightColors[i % lightColors.length]}`;
+    l.style.animationDelay = Math.random() * 1.5 + 's';
+    lightsEl.appendChild(l);
+});
+
+// Snow
+const canvas = document.getElementById('snow');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resize();
+addEventListener('resize', resize);
+
+const particles = Array.from({length: 150}, () => ({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight,
+    r: Math.random() * 3 + 0.5,
+    vy: Math.random() * 1.2 + 0.4,
+    o: Math.random() * 0.5 + 0.3
+}));
+
+function snow() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of particles) {
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        p.y += p.vy;
+        p.x += Math.sin(p.y / 80) * 0.3;
+        if (p.y > canvas.height) { p.y = -5; p.x = Math.random() * canvas.width; }
+    }
+    requestAnimationFrame(snow);
+}
+snow();
+
+load();
+setInterval(load, 2000);
+
+// Fullscreen on F11 or double-click
+document.addEventListener('dblclick', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    }
+});
+</script>
+</body>
+</html>

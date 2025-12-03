@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Tree Embed 🎄</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(to bottom, #020617 0%, #172554 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #snow {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .tree-wrap {
+            position: relative;
+            width: min(90vw, 350px);
+            height: min(90vh, 500px);
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+        }
+        .tree-wrap svg { width: 100%; height: 100%; }
+        .star {
+            position: absolute;
+            top: 2%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(28px, 8vw, 42px);
+            filter: drop-shadow(0 0 15px rgba(253,224,71,0.8));
+            animation: pulse 2s infinite;
+            z-index: 30;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        .ball {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            margin: -16px 0 0 -16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3), 2px 3px 8px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.2);
+            animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+            z-index: 40;
+        }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        .ball::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+        .lights {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .light {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: glow 1.5s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .count {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            backdrop-filter: blur(8px);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+
+<div class="tree-wrap" id="tree">
+    <div class="star">⭐</div>
+    <svg viewBox="0 0 400 500">
+        <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%">
+                <stop offset="0%" stop-color="#052e16"/>
+                <stop offset="50%" stop-color="#14532d"/>
+                <stop offset="100%" stop-color="#052e16"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#166534"/>
+                <stop offset="100%" stop-color="#14532d"/>
+            </linearGradient>
+        </defs>
+        <rect x="175" y="445" width="50" height="55" rx="3" fill="#4a3728"/>
+        <!-- Presents -->
+        <g transform="translate(85,470)"><rect y="8" width="40" height="30" rx="3" fill="#dc2626"/><rect x="16" y="8" width="8" height="30" fill="#fbbf24"/><rect y="18" width="40" height="6" fill="#fbbf24"/></g>
+        <g transform="translate(275,472)"><rect y="6" width="35" height="26" rx="3" fill="#3b82f6"/><rect x="14" y="6" width="7" height="26" fill="#f472b6"/><rect y="15" width="35" height="5" fill="#f472b6"/></g>
+        <!-- Tree -->
+        <path d="M30 440 Q100 460 200 470 Q300 460 370 440 L340 355 Q200 330 60 355 Z" fill="url(#g1)"/>
+        <path d="M50 430 Q130 450 200 460 Q270 450 350 430 L200 310 Z" fill="url(#g2)" opacity="0.85"/>
+        <path d="M55 360 Q130 380 200 390 Q270 380 345 360 L305 275 Q200 250 95 275 Z" fill="url(#g1)"/>
+        <path d="M75 350 Q140 365 200 375 Q260 365 325 350 L200 230 Z" fill="url(#g2)" opacity="0.85"/>
+        <path d="M85 280 Q145 295 200 305 Q255 295 315 280 L280 200 Q200 175 120 200 Z" fill="url(#g1)"/>
+        <path d="M100 270 Q150 285 200 295 Q250 285 300 270 L200 160 Z" fill="#15803d" opacity="0.85"/>
+        <path d="M115 200 Q160 215 200 220 Q240 215 285 200 L255 130 Q200 110 145 130 Z" fill="url(#g1)"/>
+        <path d="M130 190 Q165 200 200 210 Q235 200 270 190 L200 95 Z" fill="#22c55e" opacity="0.8"/>
+        <path d="M145 125 Q175 135 200 140 Q225 135 255 125 L200 45 Z" fill="url(#g1)"/>
+        <path d="M160 115 Q180 125 200 130 Q220 125 240 115 L200 35 Z" fill="#4ade80" opacity="0.7"/>
+    </svg>
+    <div class="lights" id="lights"></div>
+    <div id="balls"></div>
+</div>
+
+<div class="count">🎄 <span id="count">0</span> ornaments</div>
+
+<script>
+const DB = "https://christmas-tree-ef839-default-rtdb.firebaseio.com";
+const COLORS = ["#e74c3c","#f1c40f","#9b59b6","#3498db","#1abc9c","#e67e22","#ff6b6b"];
+let balls = {}, lastData = '';
+
+function color(name) {
+    let n = 0;
+    for (let i = 0; i < name.length; i++) n = (n * 31 + name.charCodeAt(i)) >>> 0;
+    return COLORS[n % COLORS.length];
+}
+
+async function load() {
+    try {
+        const r = await fetch(DB + "/balls.json");
+        const data = await r.json() || {};
+        const str = JSON.stringify(data);
+        if (str !== lastData) {
+            lastData = str;
+            balls = data;
+            render();
+        }
+    } catch {}
+}
+
+function render() {
+    const c = document.getElementById('balls');
+    c.innerHTML = '';
+    const entries = Object.entries(balls).filter(([,d]) => d?.name);
+    entries.forEach(([id, d]) => {
+        const b = document.createElement('div');
+        b.className = 'ball';
+        b.style.left = d.x + '%';
+        b.style.top = d.y + '%';
+        b.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${d.color || color(d.name)} 60%, rgba(0,0,0,0.3))`;
+        b.textContent = d.name.slice(0, 4);
+        b.title = d.name;
+        c.appendChild(b);
+    });
+    document.getElementById('count').textContent = entries.length;
+}
+
+// Lights
+const lightPos = [
+    {x:25,y:85},{x:55,y:86},{x:70,y:84},{x:42,y:73},{x:58,y:71},
+    {x:45,y:58},{x:68,y:53},{x:36,y:42},{x:64,y:40},{x:50,y:32}
+];
+const lightColors = ['#ef4444','#fbbf24','#22c55e','#3b82f6','#f472b6'];
+const lightsEl = document.getElementById('lights');
+lightPos.forEach((p, i) => {
+    const l = document.createElement('div');
+    l.className = 'light';
+    l.style.left = p.x + '%';
+    l.style.top = p.y + '%';
+    l.style.background = lightColors[i % lightColors.length];
+    l.style.boxShadow = `0 0 8px ${lightColors[i % lightColors.length]}`;
+    l.style.animationDelay = Math.random() * 1.5 + 's';
+    lightsEl.appendChild(l);
+});
+
+// Snow
+const canvas = document.getElementById('snow');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resize();
+addEventListener('resize', resize);
+
+const particles = Array.from({length: 80}, () => ({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight,
+    r: Math.random() * 2 + 0.5,
+    vy: Math.random() * 1 + 0.3,
+    o: Math.random() * 0.4 + 0.3
+}));
+
+function snow() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of particles) {
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        p.y += p.vy;
+        p.x += Math.sin(p.y / 80) * 0.3;
+        if (p.y > canvas.height) { p.y = -5; p.x = Math.random() * canvas.width; }
+    }
+    requestAnimationFrame(snow);
+}
+snow();
+
+load();
+setInterval(load, 3000);
+</script>
+</body>
+</html>

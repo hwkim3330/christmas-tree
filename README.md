@@ -10,33 +10,66 @@
 
 ### 버전 선택
 
-| Version | URL | Description | Storage |
-|---------|-----|-------------|---------|
-| **Standard** | [index.html](https://hwkim3330.github.io/christmas-tree/) | 풀 기능 버전 (눈, 별, 집, 조명) | Firebase |
-| **Lite** | [lite.html](https://hwkim3330.github.io/christmas-tree/lite.html) | 경량 버전 (빠른 로딩) | Firebase |
-| **Local** | [local.html](https://hwkim3330.github.io/christmas-tree/local.html) | 오프라인 개인용 | LocalStorage |
+| Version | URL | Description | Storage | Size |
+|---------|-----|-------------|---------|------|
+| **Standard** | [index.html](https://hwkim3330.github.io/christmas-tree/) | 풀 기능 버전 (눈, 별, 집, 조명, 선물) | Firebase | ~48KB |
+| **Lite** | [lite.html](https://hwkim3330.github.io/christmas-tree/lite.html) | 경량 버전 (빠른 로딩) | Firebase | ~9KB |
+| **Local** | [local.html](https://hwkim3330.github.io/christmas-tree/local.html) | 오프라인 개인용 | LocalStorage | ~22KB |
+| **Embed** | [embed.html](https://hwkim3330.github.io/christmas-tree/embed.html) | iframe 삽입용 (읽기 전용) | Firebase | ~6KB |
+| **Kiosk** | [kiosk.html](https://hwkim3330.github.io/christmas-tree/kiosk.html) | 디지털 사이니지/전시용 | Firebase | ~12KB |
+| **Mini** | [mini.html](https://hwkim3330.github.io/christmas-tree/mini.html) | 초경량 버전 | Firebase | ~4KB |
 
-## 📦 3가지 버전
+## 📦 6가지 버전
 
 ### 1️⃣ Standard (`index.html`)
 풀 기능 버전으로, 모든 시각 효과와 Firebase 실시간 동기화를 지원합니다.
 - 모든 방문자가 같은 트리를 함께 꾸밈
 - 눈, 별, 달, 집 등 풍부한 배경
+- 🎁 트리 밑 선물 상자들
+- 🗑️ 오너먼트 개별 삭제 기능
+- 📳 모바일 햅틱 피드백
 - 사운드 효과 및 배경 음악 지원
-- ~45KB, 로딩 ~1초
 
 ### 2️⃣ Lite (`lite.html`)
 경량 버전으로, 저사양 기기나 빠른 로딩이 필요할 때 사용합니다.
 - Firebase 실시간 동기화 (공유 기능)
 - 심플한 디자인, 애니메이션 최소화
-- ~8KB, 로딩 ~0.3초
+- 🗑️ 오너먼트 삭제 기능
 
 ### 3️⃣ Local (`local.html`)
 **오프라인 개인용** 버전으로, 인터넷 연결 없이 사용할 수 있습니다.
 - LocalStorage에 저장 (브라우저별 개별 저장)
 - 데이터 내보내기/가져오기 (JSON)
+- 🎁 트리 밑 선물 상자들
+- 🗑️ 오너먼트 삭제 기능
 - 인터넷 불필요, 완전 오프라인
-- ~20KB
+
+### 4️⃣ Embed (`embed.html`)
+웹사이트에 iframe으로 삽입 가능한 읽기 전용 버전입니다.
+- 컨트롤 없이 트리만 표시
+- 실시간 오너먼트 표시
+- 눈, 조명 효과
+- iframe 삽입에 최적화
+
+```html
+<iframe src="https://hwkim3330.github.io/christmas-tree/embed.html"
+        width="400" height="500" frameborder="0"></iframe>
+```
+
+### 5️⃣ Kiosk (`kiosk.html`)
+디지털 사이니지, 전시용 전체화면 버전입니다.
+- 🖥️ 대형 디스플레이 최적화
+- 📊 통계 표시 (총 오너먼트, 오늘 추가된 수)
+- 📋 최근 추가된 오너먼트 목록
+- ⏰ 실시간 시계
+- 🖱️ 커서 숨김 (키오스크 모드)
+- 더블클릭으로 전체화면
+
+### 6️⃣ Mini (`mini.html`)
+초경량 버전으로, 가장 작은 파일 크기입니다.
+- ~4KB 극소 용량
+- 핵심 기능만 포함 (추가, 이동)
+- 저대역폭 환경에 적합
 
 ## ✨ Features
 
@@ -47,15 +80,17 @@
 - 🏠 **겨울 풍경** - 눈 덮인 집과 굴뚝 연기
 - 💡 **트리 조명** - 다채로운 깜빡이는 조명
 - ✨ **스파클 효과** - 오너먼트 추가/이동 시 반짝임
+- 🎁 **선물 상자** - 트리 밑 리본 달린 선물들
 
 ### 🎱 Ornaments
 - 🔴 **메탈릭 그라디언트** - 사실적인 크리스마스 볼
 - 🏷️ **이름 표시** - 호버 시 전체 이름 툴팁
 - ✋ **드래그 앤 드롭** - 자유로운 위치 이동
 - 🎨 **자동 색상** - 이름 기반 고유 색상
+- 🗑️ **삭제 기능** - 호버 시 X 버튼으로 삭제
 
 ### 🔄 Sync Options
-- ☁️ **Firebase** (Standard/Lite) - 실시간 공유
+- ☁️ **Firebase** (Standard/Lite/Embed/Kiosk/Mini) - 실시간 공유
 - 💾 **LocalStorage** (Local) - 오프라인 저장
 - 📤 **Export/Import** (Local) - JSON 백업/복원
 
@@ -66,6 +101,7 @@
 
 ### 📱 Mobile Support
 - 📲 **터치 드래그** 지원
+- 📳 **햅틱 피드백** - 진동 피드백
 - 🎯 **반응형 디자인**
 - 🔒 **Safe Area** (iPhone notch)
 
@@ -140,29 +176,32 @@ christmas-tree/
 ├── index.html      # Standard 버전 (Firebase, 풀 기능)
 ├── lite.html       # Lite 버전 (Firebase, 경량)
 ├── local.html      # Local 버전 (LocalStorage, 오프라인)
+├── embed.html      # Embed 버전 (iframe 삽입용)
+├── kiosk.html      # Kiosk 버전 (디지털 사이니지용)
+├── mini.html       # Mini 버전 (초경량)
 ├── song.mp3        # 배경 음악 (선택사항)
 └── README.md
 ```
 
 ## 🎯 Version Comparison
 
-| Feature | Standard | Lite | Local |
-|---------|:--------:|:----:|:-----:|
-| **Storage** | Firebase | Firebase | LocalStorage |
-| **Sharing** | ✅ 실시간 공유 | ✅ 실시간 공유 | ❌ 개인용 |
-| **Offline** | ❌ | ❌ | ✅ 완전 오프라인 |
-| SVG Tree | 다층 그라디언트 | 심플 | 다층 그라디언트 |
-| Snow | ✅ Canvas | ❌ | ✅ Canvas |
-| Stars | ✅ | ❌ | ✅ |
-| House & Moon | ✅ | ❌ | ✅ Moon only |
-| Tree Lights | ✅ | ❌ | ✅ |
-| Sparkle Effects | ✅ | ❌ | ❌ |
-| Sound Effects | ✅ | ❌ | ❌ |
-| Background Music | ✅ | ❌ | ❌ |
-| Export/Import | ❌ | ❌ | ✅ JSON |
-| Error Handling | 강화 | 기본 | 기본 |
-| **File Size** | ~45KB | ~8KB | ~20KB |
-| **Load Time** | ~1s | ~0.3s | ~0.5s |
+| Feature | Standard | Lite | Local | Embed | Kiosk | Mini |
+|---------|:--------:|:----:|:-----:|:-----:|:-----:|:----:|
+| **Storage** | Firebase | Firebase | LocalStorage | Firebase | Firebase | Firebase |
+| **Sharing** | ✅ | ✅ | ❌ | ✅ (읽기) | ✅ (읽기) | ✅ |
+| **Offline** | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Add Ornament** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| **Delete Ornament** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Drag & Drop** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| SVG Tree | 다층 | 심플 | 다층 | 다층 | 다층 | 심플 |
+| Snow | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Stars | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| Tree Lights | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Presents | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Stats Display | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Haptic Feedback | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Sound | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **File Size** | ~48KB | ~9KB | ~22KB | ~6KB | ~12KB | ~4KB |
 
 ## 🛠️ Tech Stack
 
@@ -174,7 +213,7 @@ christmas-tree/
 
 ## 📝 Data Structure
 
-### Firebase (Standard/Lite)
+### Firebase (Standard/Lite/Embed/Kiosk/Mini)
 
 ```json
 {

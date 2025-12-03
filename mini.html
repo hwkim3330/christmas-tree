@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎄 Mini Tree</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:sans-serif;background:linear-gradient(#020617,#172554);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:10px}
+h1{color:#fff;font-size:1.2rem;margin:10px 0}
+.t{position:relative;width:280px;height:380px;cursor:pointer}
+.t svg{width:100%;height:100%}
+.s{position:absolute;top:3%;left:50%;transform:translateX(-50%);font-size:36px;filter:drop-shadow(0 0 10px #fde047)}
+.b{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;box-shadow:inset -2px -2px 6px rgba(0,0,0,.3),2px 2px 5px rgba(0,0,0,.4);cursor:grab;animation:p .4s ease}
+@keyframes p{from{transform:scale(0)}to{transform:scale(1)}}
+.p{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border:2px dashed #fff;border-radius:50%;display:none;animation:r 2s linear infinite}
+.p.a{display:block}
+@keyframes r{to{transform:rotate(360deg)}}
+.c{background:rgba(0,0,0,.5);padding:12px;border-radius:12px;width:280px;margin-top:10px}
+.r{display:flex;gap:8px;margin-bottom:8px}
+input{flex:1;padding:8px 12px;border:none;border-radius:8px;font-size:14px}
+button{padding:8px 14px;border:none;border-radius:8px;background:#dc2626;color:#fff;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5}
+.i{color:rgba(255,255,255,.6);font-size:11px;text-align:center}
+.x{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s}
+.x.v{opacity:1}
+</style>
+</head>
+<body>
+<h1>🎄 Mini Christmas Tree</h1>
+<div class="t" id="t">
+<div class="s">⭐</div>
+<svg viewBox="0 0 300 400">
+<rect x="125" y="340" width="50" height="60" fill="#5d4037"/>
+<polygon points="150,20 50,150 250,150" fill="#1b5e20"/>
+<polygon points="150,80 30,220 270,220" fill="#2e7d32"/>
+<polygon points="150,150 10,340 290,340" fill="#388e3c"/>
+</svg>
+<div id="b"></div>
+<div class="p" id="p"></div>
+</div>
+<div class="c">
+<div class="r"><input id="n" placeholder="Name..." maxlength="10"><button id="a">Add</button></div>
+<div class="i">🎄 <span id="c">0</span> ornaments • <span id="st">...</span></div>
+</div>
+<div class="x" id="x"></div>
+<script>
+const D="https://christmas-tree-ef839-default-rtdb.firebaseio.com",C=["#e74c3c","#f1c40f","#9b59b6","#3498db","#1abc9c","#e67e22","#ff6b6b"];
+let B={},P=null,L='';
+const $=i=>document.getElementById(i);
+const col=n=>{let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return C[h%C.length]};
+const toast=m=>{const t=$('x');t.textContent=m;t.classList.add('v');setTimeout(()=>t.classList.remove('v'),2000)};
+const inT=(x,y)=>y>5&&y<85&&Math.abs(x-50)<(5+y*.5);
+async function load(){
+try{const r=await fetch(D+"/balls.json"),d=await r.json()||{},s=JSON.stringify(d);
+if(s!==L){L=s;B=d;render()}$('st').textContent='synced';$('st').style.color='#4ade80'}
+catch{$('st').textContent='offline';$('st').style.color='#fbbf24'}}
+function render(){
+const c=$('b');c.innerHTML='';
+const e=Object.entries(B).filter(([,d])=>d?.name);
+e.forEach(([id,d])=>{
+const b=document.createElement('div');b.className='b';
+b.style.left=d.x+'%';b.style.top=d.y+'%';
+b.style.background=`radial-gradient(circle at 30% 30%,rgba(255,255,255,.5),${d.color||col(d.name)} 60%,rgba(0,0,0,.3))`;
+b.textContent=d.name.slice(0,4);b.title=d.name;
+b.onmousedown=b.ontouchstart=e=>{e.preventDefault();drag(b,id)};
+c.appendChild(b)});
+$('c').textContent=e.length}
+function drag(el,id){
+const t=$('t'),r=t.getBoundingClientRect();
+const mv=e=>{const px=e.pageX||e.touches?.[0]?.pageX,py=e.pageY||e.touches?.[0]?.pageY;
+let x=((px-r.left)/r.width)*100,y=((py-r.top)/r.height)*100;
+x=Math.max(10,Math.min(90,x));y=Math.max(5,Math.min(85,y));
+el.style.left=x+'%';el.style.top=y+'%'};
+const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('touchmove',mv);
+document.removeEventListener('mouseup',up);document.removeEventListener('touchend',up);
+fetch(`${D}/balls/${id}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({x:parseFloat(el.style.left),y:parseFloat(el.style.top)})}).catch(()=>{})};
+document.addEventListener('mousemove',mv);document.addEventListener('touchmove',mv,{passive:false});
+document.addEventListener('mouseup',up);document.addEventListener('touchend',up)}
+$('t').onclick=e=>{
+const r=$('t').getBoundingClientRect(),x=((e.clientX-r.left)/r.width)*100,y=((e.clientY-r.top)/r.height)*100;
+if(inT(x,y)){P={x,y};$('p').style.left=x+'%';$('p').style.top=y+'%';$('p').classList.add('a');
+if(!$('n').value)toast('Enter name & Add!')}};
+$('a').onclick=async()=>{
+const n=$('n').value.trim();if(!n)return toast('Enter name!');if(!P)return toast('Click tree!');
+$('a').disabled=true;
+try{await fetch(D+"/balls.json",{method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({name:n,x:P.x,y:P.y,color:col(n),createdAt:Date.now()})});
+toast('Added! 🎄');load()}catch{toast('Failed!')}
+P=null;$('p').classList.remove('a');$('n').value='';$('a').disabled=false};
+$('n').onkeypress=e=>e.key==='Enter'&&$('a').click();
+load();setInterval(load,3000);
+</script>
+</body>
+</html>
