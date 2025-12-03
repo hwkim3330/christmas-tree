@@ -353,6 +353,27 @@
         }
         .ball:hover .ball-tooltip { opacity: 1; }
 
+        .ball-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            border: 2px solid white;
+            z-index: 60;
+        }
+        .ball:hover .ball-delete { opacity: 1; }
+        .ball-delete:hover { transform: scale(1.2); background: #dc2626; }
+
         .pending-marker {
             position: absolute;
             width: 50px;
@@ -509,6 +530,15 @@
             gap: 8px;
             color: rgba(148, 163, 184, 0.8);
             font-size: 13px;
+        }
+
+        .count-animate {
+            animation: countPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes countPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #fbbf24; }
+            100% { transform: scale(1); }
         }
 
         .status-badge {
@@ -681,6 +711,47 @@
 
                 <rect x="175" y="445" width="50" height="55" rx="3" fill="#4a3728"/>
                 <rect x="180" y="445" width="10" height="55" fill="#3e2723" opacity="0.3"/>
+
+                <!-- Presents under tree -->
+                <!-- Gift 1: Red box -->
+                <g transform="translate(80, 465)">
+                    <rect x="0" y="10" width="45" height="35" rx="3" fill="#dc2626"/>
+                    <rect x="0" y="10" width="45" height="8" rx="2" fill="#b91c1c"/>
+                    <rect x="18" y="10" width="9" height="35" fill="#fbbf24"/>
+                    <rect x="0" y="22" width="45" height="7" fill="#fbbf24"/>
+                    <path d="M15 10 Q22.5 0 30 10" fill="none" stroke="#fbbf24" stroke-width="3"/>
+                    <circle cx="22.5" cy="5" r="4" fill="#fbbf24"/>
+                </g>
+
+                <!-- Gift 2: Blue box -->
+                <g transform="translate(275, 468)">
+                    <rect x="0" y="8" width="40" height="30" rx="3" fill="#3b82f6"/>
+                    <rect x="0" y="8" width="40" height="6" rx="2" fill="#2563eb"/>
+                    <rect x="16" y="8" width="8" height="30" fill="#f472b6"/>
+                    <rect x="0" y="18" width="40" height="6" fill="#f472b6"/>
+                    <path d="M12 8 Q20 -2 28 8" fill="none" stroke="#f472b6" stroke-width="3"/>
+                    <circle cx="20" cy="3" r="3.5" fill="#f472b6"/>
+                </g>
+
+                <!-- Gift 3: Green box (small) -->
+                <g transform="translate(130, 478)">
+                    <rect x="0" y="5" width="30" height="22" rx="2" fill="#22c55e"/>
+                    <rect x="0" y="5" width="30" height="5" rx="1" fill="#16a34a"/>
+                    <rect x="12" y="5" width="6" height="22" fill="#fef08a"/>
+                    <rect x="0" y="13" width="30" height="5" fill="#fef08a"/>
+                    <path d="M9 5 Q15 -2 21 5" fill="none" stroke="#fef08a" stroke-width="2"/>
+                    <circle cx="15" cy="1" r="2.5" fill="#fef08a"/>
+                </g>
+
+                <!-- Gift 4: Purple box -->
+                <g transform="translate(235, 475)">
+                    <rect x="0" y="8" width="35" height="25" rx="2" fill="#a855f7"/>
+                    <rect x="0" y="8" width="35" height="5" rx="1" fill="#9333ea"/>
+                    <rect x="14" y="8" width="7" height="25" fill="#fcd34d"/>
+                    <rect x="0" y="17" width="35" height="5" fill="#fcd34d"/>
+                    <path d="M10 8 Q17.5 0 25 8" fill="none" stroke="#fcd34d" stroke-width="2.5"/>
+                    <circle cx="17.5" cy="3" r="3" fill="#fcd34d"/>
+                </g>
 
                 <path d="M30 440 Q100 460 200 470 Q300 460 370 440 L340 355 Q200 330 60 355 Z" fill="url(#darkGreen)" filter="url(#treeNoise)"/>
                 <path d="M50 430 Q130 450 200 460 Q270 450 350 430 L200 310 Z" fill="url(#midGreen)" opacity="0.85"/>
@@ -880,8 +951,19 @@
     // ==========================================
     // Audio (with error handling)
     // ==========================================
+    function vibrate(pattern = 10) {
+        try {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        } catch (e) {}
+    }
+
     function playBellSound() {
         if (isMuted) return;
+
+        // Haptic feedback for mobile
+        vibrate(15);
 
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1176,9 +1258,32 @@
         }
     }
 
+    async function deleteBall(id) {
+        if (!id) return;
+
+        try {
+            await fetchWithTimeout(`${CONFIG.BASE_DB}/balls/${id}.json`, {
+                method: "DELETE"
+            });
+            showToast('Ornament removed', 'info');
+            fetchBalls();
+        } catch (err) {
+            console.error('Delete error:', err);
+            showToast('Failed to remove ornament', 'error');
+        }
+    }
+
+    function animateCount() {
+        if (!ballCount) return;
+        ballCount.classList.remove('count-animate');
+        void ballCount.offsetWidth; // Force reflow
+        ballCount.classList.add('count-animate');
+    }
+
     // ==========================================
     // Render Balls
     // ==========================================
+    let previousCount = 0;
     function renderBalls() {
         if (isDragging || !ballsContainer) return;
 
@@ -1193,7 +1298,12 @@
         });
 
         if (ballCount) {
-            ballCount.textContent = entries.length;
+            const newCount = entries.length;
+            ballCount.textContent = newCount;
+            if (newCount !== previousCount) {
+                animateCount();
+                previousCount = newCount;
+            }
         }
     }
 
@@ -1218,7 +1328,20 @@
             <div class="ball-highlight"></div>
             ${displayName}
             <div class="ball-tooltip">${safeName}</div>
+            <div class="ball-delete" title="Remove ornament">✕</div>
         `;
+
+        // Delete button handler
+        const deleteBtn = ball.querySelector('.ball-delete');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (confirm(`Remove ${safeName}'s ornament?`)) {
+                    deleteBall(id);
+                }
+            });
+        }
 
         setupDrag(ball, id);
         ballsContainer.appendChild(ball);
