@@ -13,13 +13,14 @@
 | Version | URL | Description | Storage | Size |
 |---------|-----|-------------|---------|------|
 | **Standard** | [index.html](https://hwkim3330.github.io/christmas-tree/) | 풀 기능 버전 (눈, 별, 집, 조명, 선물) | Firebase | ~48KB |
+| **WASM** | [wasm.html](https://hwkim3330.github.io/christmas-tree/wasm.html) | WebAssembly 고성능 버전 | Firebase | ~85KB |
 | **Lite** | [lite.html](https://hwkim3330.github.io/christmas-tree/lite.html) | 경량 버전 (빠른 로딩) | Firebase | ~9KB |
 | **Local** | [local.html](https://hwkim3330.github.io/christmas-tree/local.html) | 오프라인 개인용 | LocalStorage | ~22KB |
 | **Embed** | [embed.html](https://hwkim3330.github.io/christmas-tree/embed.html) | iframe 삽입용 (읽기 전용) | Firebase | ~6KB |
 | **Kiosk** | [kiosk.html](https://hwkim3330.github.io/christmas-tree/kiosk.html) | 디지털 사이니지/전시용 | Firebase | ~12KB |
 | **Mini** | [mini.html](https://hwkim3330.github.io/christmas-tree/mini.html) | 초경량 버전 | Firebase | ~4KB |
 
-## 📦 6가지 버전
+## 📦 7가지 버전
 
 ### 1️⃣ Standard (`index.html`)
 풀 기능 버전으로, 모든 시각 효과와 Firebase 실시간 동기화를 지원합니다.
@@ -30,13 +31,28 @@
 - 📳 모바일 햅틱 피드백
 - 사운드 효과 및 배경 음악 지원
 
-### 2️⃣ Lite (`lite.html`)
+### 2️⃣ WASM (`wasm.html`) ⚡ NEW
+**WebAssembly 고성능 버전** - Rust로 구현된 파티클 시스템으로 최적화된 성능을 제공합니다.
+- 🦀 **Rust + WebAssembly** 파티클 엔진
+- ⚡ **300개 눈송이** (JS 버전 대비 2배)
+- ✨ **WASM 기반 스파클 이펙트** (100개 동시 렌더링)
+- 💡 **부드러운 조명 효과** (실시간 brightness 계산)
+- 📊 **실시간 성능 통계** (FPS, 파티클 수)
+- 🚀 **CPU 부하 감소** (네이티브 수준 성능)
+
+```
+wasm-snow/
+├── Cargo.toml       # Rust 프로젝트 설정
+└── src/lib.rs       # ParticleSystem, Sparkle, Light 구현
+```
+
+### 3️⃣ Lite (`lite.html`)
 경량 버전으로, 저사양 기기나 빠른 로딩이 필요할 때 사용합니다.
 - Firebase 실시간 동기화 (공유 기능)
 - 심플한 디자인, 애니메이션 최소화
 - 🗑️ 오너먼트 삭제 기능
 
-### 3️⃣ Local (`local.html`)
+### 4️⃣ Local (`local.html`)
 **오프라인 개인용** 버전으로, 인터넷 연결 없이 사용할 수 있습니다.
 - LocalStorage에 저장 (브라우저별 개별 저장)
 - 데이터 내보내기/가져오기 (JSON)
@@ -44,7 +60,7 @@
 - 🗑️ 오너먼트 삭제 기능
 - 인터넷 불필요, 완전 오프라인
 
-### 4️⃣ Embed (`embed.html`)
+### 5️⃣ Embed (`embed.html`)
 웹사이트에 iframe으로 삽입 가능한 읽기 전용 버전입니다.
 - 컨트롤 없이 트리만 표시
 - 실시간 오너먼트 표시
@@ -56,7 +72,7 @@
         width="400" height="500" frameborder="0"></iframe>
 ```
 
-### 5️⃣ Kiosk (`kiosk.html`)
+### 6️⃣ Kiosk (`kiosk.html`)
 디지털 사이니지, 전시용 전체화면 버전입니다.
 - 🖥️ 대형 디스플레이 최적화
 - 📊 통계 표시 (총 오너먼트, 오늘 추가된 수)
@@ -65,7 +81,7 @@
 - 🖱️ 커서 숨김 (키오스크 모드)
 - 더블클릭으로 전체화면
 
-### 6️⃣ Mini (`mini.html`)
+### 7️⃣ Mini (`mini.html`)
 초경량 버전으로, 가장 작은 파일 크기입니다.
 - ~4KB 극소 용량
 - 핵심 기능만 포함 (추가, 이동)
@@ -173,35 +189,43 @@ const STORAGE_KEY = 'my_christmas_tree_v1';  // 변경 가능
 
 ```
 christmas-tree/
-├── index.html      # Standard 버전 (Firebase, 풀 기능)
-├── lite.html       # Lite 버전 (Firebase, 경량)
-├── local.html      # Local 버전 (LocalStorage, 오프라인)
-├── embed.html      # Embed 버전 (iframe 삽입용)
-├── kiosk.html      # Kiosk 버전 (디지털 사이니지용)
-├── mini.html       # Mini 버전 (초경량)
-├── song.mp3        # 배경 음악 (선택사항)
+├── index.html              # Standard 버전 (Firebase, 풀 기능)
+├── wasm.html               # WASM 버전 (WebAssembly 고성능)
+├── christmas_snow.js       # WASM JavaScript glue code
+├── christmas_snow_bg.wasm  # WebAssembly 바이너리 (61KB)
+├── lite.html               # Lite 버전 (Firebase, 경량)
+├── local.html              # Local 버전 (LocalStorage, 오프라인)
+├── embed.html              # Embed 버전 (iframe 삽입용)
+├── kiosk.html              # Kiosk 버전 (디지털 사이니지용)
+├── mini.html               # Mini 버전 (초경량)
+├── song.mp3                # 배경 음악 (선택사항)
+├── wasm-snow/              # Rust WASM 소스코드
+│   ├── Cargo.toml
+│   └── src/lib.rs
 └── README.md
 ```
 
 ## 🎯 Version Comparison
 
-| Feature | Standard | Lite | Local | Embed | Kiosk | Mini |
-|---------|:--------:|:----:|:-----:|:-----:|:-----:|:----:|
-| **Storage** | Firebase | Firebase | LocalStorage | Firebase | Firebase | Firebase |
-| **Sharing** | ✅ | ✅ | ❌ | ✅ (읽기) | ✅ (읽기) | ✅ |
-| **Offline** | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Add Ornament** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| **Delete Ornament** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Drag & Drop** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| SVG Tree | 다층 | 심플 | 다층 | 다층 | 다층 | 심플 |
-| Snow | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
-| Stars | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
-| Tree Lights | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
-| Presents | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
-| Stats Display | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Haptic Feedback | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Sound | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **File Size** | ~48KB | ~9KB | ~22KB | ~6KB | ~12KB | ~4KB |
+| Feature | Standard | WASM | Lite | Local | Embed | Kiosk | Mini |
+|---------|:--------:|:----:|:----:|:-----:|:-----:|:-----:|:----:|
+| **Storage** | Firebase | Firebase | Firebase | LocalStorage | Firebase | Firebase | Firebase |
+| **Sharing** | ✅ | ✅ | ✅ | ❌ | ✅ (읽기) | ✅ (읽기) | ✅ |
+| **Offline** | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Add Ornament** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| **Delete Ornament** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Drag & Drop** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| SVG Tree | 다층 | 다층 | 심플 | 다층 | 다층 | 다층 | 심플 |
+| Snow | ✅ JS | ⚡ WASM | ❌ | ✅ JS | ✅ JS | ✅ JS | ❌ |
+| Sparkles | ✅ JS | ⚡ WASM | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Tree Lights | ✅ CSS | ⚡ WASM | ❌ | ✅ CSS | ✅ CSS | ✅ CSS | ❌ |
+| Stars | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| Presents | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Perf Stats | ❌ | ✅ FPS | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Haptic | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Sound | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **File Size** | ~48KB | ~85KB | ~9KB | ~22KB | ~6KB | ~12KB | ~4KB |
+| **Particles** | 150 | 300+ | - | 120 | 80 | 150 | - |
 
 ## 🛠️ Tech Stack
 
@@ -209,7 +233,23 @@ christmas-tree/
 - **Database**: Firebase Realtime Database / LocalStorage
 - **Graphics**: SVG, Canvas API
 - **Audio**: Web Audio API
+- **WASM**: Rust + wasm-bindgen + wasm-pack
 - **Hosting**: GitHub Pages
+
+### WASM 빌드 방법
+
+```bash
+# wasm-pack 설치
+cargo install wasm-pack
+
+# WASM 빌드
+cd wasm-snow
+wasm-pack build --target web --release
+
+# 파일 복사
+cp pkg/christmas_snow_bg.wasm ../
+cp pkg/christmas_snow.js ../
+```
 
 ## 📝 Data Structure
 

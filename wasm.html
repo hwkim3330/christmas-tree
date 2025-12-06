@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Christmas Tree WASM 🎄</title>
+    <meta name="description" content="High-performance Christmas Tree with WebAssembly-powered particle effects">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(to bottom, #020617 0%, #172554 50%, #1e293b 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #effectsCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .background {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .moon {
+            position: absolute;
+            top: 40px;
+            right: 10%;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fffde7, #fef9c3 50%, #fef08a);
+            box-shadow: 0 0 60px rgba(255, 255, 200, 0.6);
+        }
+
+        .stars { position: absolute; width: 100%; height: 100%; }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(to top, #e2e8f0, #f1f5f9 50%, transparent);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            transform: scaleX(1.5);
+        }
+
+        .container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .header {
+            margin-top: 20px;
+            padding: 12px 28px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: white;
+        }
+
+        .wasm-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .tree-container {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 180px;
+            width: 100%;
+            max-width: 500px;
+            z-index: 15;
+        }
+
+        .tree-wrapper {
+            position: relative;
+            width: 340px;
+            height: 480px;
+            cursor: pointer;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+        }
+
+        @media (min-width: 640px) {
+            .tree-wrapper { width: 400px; height: 560px; }
+        }
+
+        .tree-svg { width: 100%; height: 100%; }
+
+        .tree-star {
+            position: absolute;
+            top: 2%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            filter: drop-shadow(0 0 20px rgba(253, 224, 71, 0.9));
+            animation: starPulse 2s infinite;
+            z-index: 30;
+        }
+        @keyframes starPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+
+        .ball {
+            position: absolute;
+            width: 38px;
+            height: 38px;
+            margin-left: -19px;
+            margin-top: -19px;
+            border-radius: 50%;
+            cursor: grab;
+            z-index: 40;
+            transition: transform 0.15s;
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            animation: ballAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid rgba(255,255,255,0.25);
+        }
+        .ball:hover { transform: scale(1.25); z-index: 50; }
+        .ball:active { cursor: grabbing; }
+
+        @keyframes ballAppear {
+            from { transform: scale(0) rotate(-180deg); }
+            to { transform: scale(1) rotate(0deg); }
+        }
+
+        .ball-cap {
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 6px;
+            background: linear-gradient(to bottom, #ffd700, #b8860b);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .ball-highlight {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 50%;
+            filter: blur(2px);
+            pointer-events: none;
+        }
+
+        .ball-tooltip {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+        .ball:hover .ball-tooltip { opacity: 1; }
+
+        .ball-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            border: 2px solid white;
+            z-index: 60;
+        }
+        .ball:hover .ball-delete { opacity: 1; }
+        .ball-delete:hover { transform: scale(1.2); background: #dc2626; }
+
+        .pending-marker {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            margin-left: -25px;
+            margin-top: -25px;
+            border: 3px dashed rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            animation: pendingSpin 3s linear infinite;
+            z-index: 45;
+            display: none;
+        }
+        .pending-marker.active { display: flex; align-items: center; justify-content: center; }
+        .pending-dot {
+            width: 12px;
+            height: 12px;
+            background: #fbbf24;
+            border-radius: 50%;
+            animation: pendingPing 1s infinite;
+        }
+        @keyframes pendingSpin { to { transform: rotate(360deg); } }
+        @keyframes pendingPing {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+        }
+
+        .control-panel {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .name-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.4);
+            border-radius: 14px;
+            padding: 14px 18px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+        .name-input::placeholder { color: rgba(148, 163, 184, 0.6); }
+        .name-input:focus { border-color: #fbbf24; }
+
+        .add-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 22px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-btn.ready {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+        }
+        .add-btn.ready:hover { transform: translateY(-2px); }
+        .add-btn.waiting {
+            background: rgba(71, 85, 105, 0.5);
+            color: rgba(148, 163, 184, 0.8);
+            cursor: not-allowed;
+        }
+        .add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ornament-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(148, 163, 184, 0.8);
+            font-size: 13px;
+        }
+
+        .count-animate { animation: countPop 0.4s ease; }
+        @keyframes countPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #fbbf24; }
+            100% { transform: scale(1); }
+        }
+
+        .perf-stats {
+            font-size: 11px;
+            color: rgba(148, 163, 184, 0.6);
+            font-family: monospace;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { background: rgba(6, 78, 59, 0.9); color: #a7f3d0; }
+        .toast.info { background: rgba(30, 58, 138, 0.9); color: #bfdbfe; }
+        .toast.error { background: rgba(127, 29, 29, 0.9); color: #fecaca; }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: #020617;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: opacity 0.5s;
+        }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(251, 191, 36, 0.2);
+            border-top-color: #fbbf24;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: #fef3c7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading WebAssembly...</p>
+</div>
+
+<canvas id="effectsCanvas"></canvas>
+
+<div class="background">
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+    <div class="ground"></div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>Christmas Tree 🎄</h1>
+        <span class="wasm-badge">WASM</span>
+    </div>
+
+    <div class="tree-container">
+        <div class="tree-wrapper" id="treeWrapper">
+            <div class="tree-star">⭐</div>
+
+            <svg class="tree-svg" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="darkGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#052e16"/>
+                        <stop offset="50%" stop-color="#14532d"/>
+                        <stop offset="100%" stop-color="#052e16"/>
+                    </linearGradient>
+                    <linearGradient id="midGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#166534"/>
+                        <stop offset="100%" stop-color="#14532d"/>
+                    </linearGradient>
+                </defs>
+
+                <rect x="175" y="445" width="50" height="55" rx="3" fill="#4a3728"/>
+
+                <!-- Presents -->
+                <g transform="translate(80, 465)">
+                    <rect x="0" y="10" width="45" height="35" rx="3" fill="#dc2626"/>
+                    <rect x="18" y="10" width="9" height="35" fill="#fbbf24"/>
+                    <rect x="0" y="22" width="45" height="7" fill="#fbbf24"/>
+                    <path d="M15 10 Q22.5 0 30 10" fill="none" stroke="#fbbf24" stroke-width="3"/>
+                    <circle cx="22.5" cy="5" r="4" fill="#fbbf24"/>
+                </g>
+                <g transform="translate(275, 468)">
+                    <rect x="0" y="8" width="40" height="30" rx="3" fill="#3b82f6"/>
+                    <rect x="16" y="8" width="8" height="30" fill="#f472b6"/>
+                    <rect x="0" y="18" width="40" height="6" fill="#f472b6"/>
+                </g>
+                <g transform="translate(130, 478)">
+                    <rect x="0" y="5" width="30" height="22" rx="2" fill="#22c55e"/>
+                    <rect x="12" y="5" width="6" height="22" fill="#fef08a"/>
+                    <rect x="0" y="13" width="30" height="5" fill="#fef08a"/>
+                </g>
+                <g transform="translate(235, 475)">
+                    <rect x="0" y="8" width="35" height="25" rx="2" fill="#a855f7"/>
+                    <rect x="14" y="8" width="7" height="25" fill="#fcd34d"/>
+                    <rect x="0" y="17" width="35" height="5" fill="#fcd34d"/>
+                </g>
+
+                <!-- Tree layers -->
+                <path d="M30 440 Q100 460 200 470 Q300 460 370 440 L340 355 Q200 330 60 355 Z" fill="url(#darkGreen)"/>
+                <path d="M50 430 Q130 450 200 460 Q270 450 350 430 L200 310 Z" fill="url(#midGreen)" opacity="0.85"/>
+                <path d="M55 360 Q130 380 200 390 Q270 380 345 360 L305 275 Q200 250 95 275 Z" fill="url(#darkGreen)"/>
+                <path d="M75 350 Q140 365 200 375 Q260 365 325 350 L200 230 Z" fill="url(#midGreen)" opacity="0.85"/>
+                <path d="M85 280 Q145 295 200 305 Q255 295 315 280 L280 200 Q200 175 120 200 Z" fill="url(#darkGreen)"/>
+                <path d="M100 270 Q150 285 200 295 Q250 285 300 270 L200 160 Z" fill="#15803d" opacity="0.85"/>
+                <path d="M115 200 Q160 215 200 220 Q240 215 285 200 L255 130 Q200 110 145 130 Z" fill="url(#darkGreen)"/>
+                <path d="M130 190 Q165 200 200 210 Q235 200 270 190 L200 95 Z" fill="#22c55e" opacity="0.8"/>
+                <path d="M145 125 Q175 135 200 140 Q225 135 255 125 L200 45 Z" fill="url(#darkGreen)"/>
+                <path d="M160 115 Q180 125 200 130 Q220 125 240 115 L200 35 Z" fill="#4ade80" opacity="0.7"/>
+            </svg>
+
+            <div id="ballsContainer"></div>
+            <div class="pending-marker" id="pendingMarker"><div class="pending-dot"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="controls">
+    <div class="control-panel">
+        <div class="input-row">
+            <input type="text" class="name-input" id="nameInput" placeholder="Your name..." maxlength="12">
+            <button class="add-btn waiting" id="addBtn">
+                <span id="btnIcon">📍</span>
+                <span id="btnText">Pick Spot</span>
+            </button>
+        </div>
+        <div class="status-row">
+            <div class="ornament-count">
+                <span>🎄</span>
+                <span><span id="ballCount">0</span> ornaments</span>
+            </div>
+            <div class="perf-stats" id="perfStats">WASM: --fps | Snow: --</div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import init, { ParticleSystem, PerfStats } from './christmas_snow.js';
+
+const DB = "https://christmas-tree-ef839-default-rtdb.firebaseio.com";
+const COLORS = ["#e74c3c","#c0392b","#f1c40f","#f39c12","#9b59b6","#8e44ad","#3498db","#2980b9","#1abc9c","#16a085","#e67e22","#d35400"];
+
+let balls = {}, pendingPos = null, isDragging = false, lastData = '', prevCount = 0;
+let particleSystem = null, perfStats = null;
+
+const $ = id => document.getElementById(id);
+const treeWrapper = $('treeWrapper');
+const ballsContainer = $('ballsContainer');
+const pendingMarker = $('pendingMarker');
+const nameInput = $('nameInput');
+const addBtn = $('addBtn');
+const btnIcon = $('btnIcon');
+const btnText = $('btnText');
+const ballCount = $('ballCount');
+const toast = $('toast');
+const loadingOverlay = $('loadingOverlay');
+const perfStatsEl = $('perfStats');
+const canvas = $('effectsCanvas');
+const ctx = canvas.getContext('2d');
+
+function colorFromName(name) {
+    if (!name) return COLORS[0];
+    let n = 0;
+    for (let i = 0; i < name.length; i++) n = (n * 31 + name.charCodeAt(i)) >>> 0;
+    return COLORS[n % COLORS.length];
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+let toastTimeout = null;
+function showToast(message, type = 'info') {
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function animateCount() {
+    ballCount.classList.remove('count-animate');
+    void ballCount.offsetWidth;
+    ballCount.classList.add('count-animate');
+}
+
+// Firebase
+async function fetchBalls() {
+    try {
+        const res = await fetch(DB + "/balls.json");
+        const json = await res.json() || {};
+        const str = JSON.stringify(json);
+        if (str !== lastData) {
+            lastData = str;
+            balls = json;
+            renderBalls();
+        }
+    } catch {}
+}
+
+async function addBallToDB(name, x, y) {
+    const color = colorFromName(name);
+    try {
+        await fetch(DB + "/balls.json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, x, y, color, createdAt: Date.now() })
+        });
+        showToast('Ornament added! 🎄', 'success');
+
+        // Spawn sparkles via WASM
+        if (particleSystem && treeWrapper) {
+            const rect = treeWrapper.getBoundingClientRect();
+            const px = rect.left + (x / 100) * rect.width;
+            const py = rect.top + (y / 100) * rect.height;
+            particleSystem.spawn_sparkles(px, py, 35);
+        }
+
+        fetchBalls();
+        return true;
+    } catch {
+        showToast('Failed to add ornament', 'error');
+        return false;
+    }
+}
+
+async function deleteBall(id) {
+    try {
+        await fetch(`${DB}/balls/${id}.json`, { method: "DELETE" });
+        showToast('Ornament removed', 'info');
+        fetchBalls();
+    } catch {
+        showToast('Failed to remove', 'error');
+    }
+}
+
+async function updateBallPosition(id, x, y) {
+    try {
+        await fetch(`${DB}/balls/${id}.json`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ x, y })
+        });
+    } catch {}
+}
+
+function renderBalls() {
+    if (isDragging) return;
+    ballsContainer.innerHTML = '';
+
+    const entries = Object.entries(balls).filter(([,d]) => d?.name);
+    entries.forEach(([id, data]) => {
+        const ball = document.createElement('div');
+        ball.className = 'ball';
+        ball.style.left = data.x + '%';
+        ball.style.top = data.y + '%';
+        ball.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), ${data.color || colorFromName(data.name)} 60%, rgba(0,0,0,0.3))`;
+
+        const safeName = escapeHtml(data.name);
+        const displayName = safeName.length > 6 ? safeName.slice(0, 5) + '..' : safeName;
+
+        ball.innerHTML = `
+            <div class="ball-cap"></div>
+            <div class="ball-highlight"></div>
+            ${displayName}
+            <div class="ball-tooltip">${safeName}</div>
+            <div class="ball-delete" title="Remove">✕</div>
+        `;
+
+        ball.querySelector('.ball-delete').addEventListener('click', e => {
+            e.stopPropagation();
+            if (confirm(`Remove ${safeName}'s ornament?`)) deleteBall(id);
+        });
+
+        setupDrag(ball, id);
+        ballsContainer.appendChild(ball);
+    });
+
+    const newCount = entries.length;
+    ballCount.textContent = newCount;
+    if (newCount !== prevCount) {
+        animateCount();
+        prevCount = newCount;
+    }
+}
+
+function setupDrag(ball, id) {
+    function startDrag(sx, sy, e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+
+        const rect = treeWrapper.getBoundingClientRect();
+        ball.style.zIndex = '100';
+        ball.style.transition = 'none';
+
+        function move(px, py) {
+            let x = ((px - rect.left) / rect.width) * 100;
+            let y = ((py - rect.top) / rect.height) * 100;
+            x = Math.max(10, Math.min(90, x));
+            y = Math.max(8, Math.min(92, y));
+            ball.style.left = x + '%';
+            ball.style.top = y + '%';
+        }
+
+        const onMove = e => move(e.pageX || e.touches?.[0]?.pageX, e.pageY || e.touches?.[0]?.pageY);
+
+        function end() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('mouseup', end);
+            document.removeEventListener('touchend', end);
+
+            ball.style.zIndex = '';
+            ball.style.transition = '';
+
+            const x = parseFloat(ball.style.left);
+            const y = parseFloat(ball.style.top);
+            updateBallPosition(id, x, y);
+
+            // Sparkles on drop
+            if (particleSystem) {
+                const rect = treeWrapper.getBoundingClientRect();
+                particleSystem.spawn_sparkles(
+                    rect.left + (x / 100) * rect.width,
+                    rect.top + (y / 100) * rect.height,
+                    20
+                );
+            }
+
+            setTimeout(() => isDragging = false, 100);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchend', end);
+    }
+
+    ball.addEventListener('mousedown', e => startDrag(e.pageX, e.pageY, e));
+    ball.addEventListener('touchstart', e => startDrag(e.touches[0].pageX, e.touches[0].pageY, e), { passive: false });
+}
+
+// Tree click
+function isInsideTree(x, y) {
+    if (y < 8 || y > 92) return false;
+    return Math.abs(x - 50) < (8 + (y - 8) * 0.5);
+}
+
+treeWrapper.addEventListener('click', e => {
+    if (isDragging) return;
+    const rect = treeWrapper.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (isInsideTree(x, y)) {
+        pendingPos = { x, y };
+        pendingMarker.style.left = x + '%';
+        pendingMarker.style.top = y + '%';
+        pendingMarker.classList.add('active');
+
+        addBtn.className = 'add-btn ready';
+        btnIcon.textContent = '🎁';
+        btnText.textContent = 'Hang It!';
+
+        if (!nameInput.value.trim()) {
+            showToast('Enter name & click Hang It!', 'info');
+        }
+    }
+});
+
+addBtn.addEventListener('click', async () => {
+    const name = nameInput.value.trim().slice(0, 12);
+    if (!name) {
+        showToast('Enter your name!', 'error');
+        nameInput.focus();
+        return;
+    }
+    if (!pendingPos) {
+        showToast('Click tree first!', 'info');
+        return;
+    }
+
+    addBtn.disabled = true;
+    await addBallToDB(name, pendingPos.x, pendingPos.y);
+
+    pendingPos = null;
+    pendingMarker.classList.remove('active');
+    nameInput.value = '';
+    addBtn.className = 'add-btn waiting';
+    addBtn.disabled = false;
+    btnIcon.textContent = '📍';
+    btnText.textContent = 'Pick Spot';
+});
+
+nameInput.addEventListener('keypress', e => e.key === 'Enter' && addBtn.click());
+
+// Stars
+function initStars() {
+    const stars = $('stars');
+    for (let i = 0; i < 50; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 50 + '%';
+        s.style.width = s.style.height = (Math.random() * 2 + 1) + 'px';
+        s.style.animationDelay = Math.random() * 2 + 's';
+        stars.appendChild(s);
+    }
+}
+
+// WASM Animation Loop
+let lastTime = 0;
+function animate(time) {
+    const dt = Math.min((time - lastTime) / 1000, 0.1);
+    lastTime = time;
+
+    if (particleSystem && perfStats) {
+        // Resize canvas if needed
+        if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particleSystem.resize(canvas.width, canvas.height);
+        }
+
+        // Update WASM particle system
+        particleSystem.update(dt);
+        perfStats.record_frame(dt);
+
+        // Clear and render
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Render snow via WASM
+        particleSystem.render_snow(ctx);
+
+        // Render sparkles via WASM
+        particleSystem.render_sparkles(ctx);
+
+        // Render tree lights via WASM
+        if (treeWrapper) {
+            const rect = treeWrapper.getBoundingClientRect();
+            particleSystem.render_lights(ctx, rect.width, rect.height, rect.left, rect.top);
+        }
+
+        // Update perf stats display
+        const fps = perfStats.get_avg_fps().toFixed(0);
+        const snowCount = particleSystem.get_snow_count();
+        const sparkleCount = particleSystem.get_active_sparkle_count();
+        perfStatsEl.textContent = `WASM: ${fps}fps | Snow: ${snowCount} | Sparkles: ${sparkleCount}`;
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Initialize
+async function main() {
+    try {
+        // Initialize WASM
+        await init();
+
+        // Create particle system with more particles (WASM can handle it!)
+        const snowCount = Math.min(300, Math.floor(window.innerWidth / 4));
+        particleSystem = new ParticleSystem(window.innerWidth, window.innerHeight, snowCount);
+        perfStats = new PerfStats();
+
+        // Start animation loop
+        requestAnimationFrame(animate);
+
+        // Initialize other components
+        initStars();
+        await fetchBalls();
+        setInterval(fetchBalls, 2000);
+
+        // Hide loading
+        setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+
+    } catch (err) {
+        console.error('Failed to initialize WASM:', err);
+        loadingOverlay.innerHTML = `
+            <div style="color: #f87171; text-align: center; padding: 20px;">
+                <p style="font-size: 1.5rem; margin-bottom: 10px;">Failed to load WebAssembly</p>
+                <p style="font-size: 0.9rem; opacity: 0.7;">Try <a href="index.html" style="color: #60a5fa;">Standard version</a> instead</p>
+            </div>
+        `;
+    }
+}
+
+main();
+</script>
+</body>
+</html>
